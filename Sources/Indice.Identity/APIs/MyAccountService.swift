@@ -30,7 +30,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
         try await networkClient.fetch(request: request)
     }
     
-    public func verify(password passwordRequest: ValidatePasswordRequest) async throws -> [PasswordRuleInfo] {
+    public func verify(password passwordRequest: ValidatePasswordRequest) async throws -> CredentialsValidationInfo {
         let request = URLRequest.builder()
             .post(path: authorization.baseUrl + "/api/account/validate-password")
             .bodyJson(of: passwordRequest)

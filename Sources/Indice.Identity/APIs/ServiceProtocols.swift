@@ -39,7 +39,7 @@ public protocol DevicesRepository: AnyObject {
 public protocol MyAccountRepository: AnyObject {
     func register(request: RegisterUserRequest) async throws
     
-    func verify(password: ValidatePasswordRequest) async throws -> [PasswordRuleInfo]
+    func verify(password: ValidatePasswordRequest) async throws -> CredentialsValidationInfo
     func verify(username: ValidateUsernameRequest) async throws -> UsernameStateInfo
     
     func update(email: UpdateEmailRequest) async throws

@@ -25,6 +25,8 @@ public protocol IdentityClientLogin {
     /** Try to refresh current token */
     func refreshTokens() async throws
     
+    /* Try to authorize the current client (ClientCredentials) */
+    func authorizeClient() async throws
     
     /**
         Request to revoke a use's access & refresh tokens.
@@ -47,12 +49,15 @@ extension IdentityClient: IdentityClientLogin {
     
     public var userLoginService: UserLogin { self }
     
+    public func authorizeClient() async throws {
+        tokenStorage.parse(try await authRepository.authorize(grant: .clientCredentials(client)))
+    }
+    
     public func login(withGrant grant: OAuth2Grant) async throws {
         tokenStorage.parse(try await authRepository.authorize(grant: grant))
         
         try await refreshUserInfo()
         try await refreshDevices()
-        
     }
     
     public func login(username: String, password: String) async throws {
@@ -114,7 +119,7 @@ extension IdentityClient: IdentityClientLogin {
         
         if let accessToken {
             try await authRepository.revoke(token: accessToken,
-                                         withBasicAuth: client.basicAuth)
+                                            withBasicAuth: client.basicAuth)
         }
         
         if let refreshToken {

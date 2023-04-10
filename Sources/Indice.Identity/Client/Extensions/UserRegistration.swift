@@ -29,7 +29,9 @@ extension IdentityClient: IdentityClientUserRegistration {
     }
     
     public func verify(password: String) async throws -> [PasswordRuleInfo] {
-        try await accountRepository.verify(password: .init(token: "", password: password, userName: ""))
+        try await accountRepository.verify(password: .init(token: "",
+                                                           password: password,
+                                                           userName: "")).passwordRules ?? []
     }
 
 }
