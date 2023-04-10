@@ -40,38 +40,45 @@ public class IdentityClient {
     
     public var tokens: TokenStorageAccessor { get { tokenStorage } }
     
-    public private(set) lazy
+    internal lazy
     var authRepository: AuthRepository = {
         servicesFactory.authRepository(authorization: authorization,
                                        networkClient: networkClient)
     }()
     
-    public private(set) lazy
+    internal lazy
     var accountRepository: MyAccountRepository = {
         servicesFactory.myAccountRepository(authorization: authorization,
                                             networkClient: networkClient)
     }()
     
-    public private(set) lazy
+    internal lazy
     var deviceRepository: DevicesRepository = {
         servicesFactory.devicesRepository(authorization: authorization,
                                           networkClient: networkClient)
     }()
     
-    public private(set) lazy
+    internal lazy
     var userRepository: UserInfoRepository = {
         servicesFactory.userRepository(authorization: authorization,
                                        networkClient: networkClient)
     }()
     
-    public private(set) lazy
+    internal lazy
     var thisDeviceRepository: ThisDeviceRepository = {
         servicesFactory.thisDeviceRepository(storage: valueStorage)
     }()
     
+    private lazy var createNetworkClient: (IdentityClient) -> NetworkClient = { client in
+        let interceptors: [InterceptorProtocol] = [AuthorizationHeaderInterceptor(tokenAccessor: client.tokens),
+                                                   AuthorizingInterceptor(authServiceProvider: { [weak client] in self })]
+        
+        return NetworkClient(interceptors: interceptors)
+    }
+    
     public private(set) lazy
     var networkClient: NetworkClient = {
-        self.createNetworkClient()
+        self.createNetworkClient(self)
     }()
     
     
@@ -104,32 +111,17 @@ public class IdentityClient {
                 authorization: Authorization,
                 servicesFactory: RepositoryFactory.Type = DefaultRepositoryFactory.self,
                 valueStorage: ValueStorage = UserDefaults.standard,
-                tokenStorage: TokenStorage = .ephemeral) {
+                tokenStorage: TokenStorage = .ephemeral,
+                networkClientBuilder: ((IdentityClient) -> NetworkClient)? = nil) {
         self.client = client
         self.authorization = authorization
         self.servicesFactory = servicesFactory
         self.valueStorage = valueStorage
         self.tokenStorage = tokenStorage
-    }
-    
-}
-
-
-// MARK: - Extra initialization steps.
-
-private extension IdentityClient {
-    
-    // Used in lazy initialization of network client
-    func createNetworkClient() -> NetworkClient {
-        let interceptors: [InterceptorProtocol] = [
-            AuthorizationHeaderInterceptor(tokenAccessor: self.tokens),
-            AuthorizingInterceptor(authServiceProvider: { [weak self] in
-                return self
-            })
-        ]
         
-        
-        return NetworkClient(interceptors: interceptors)
+        if let networkClientBuilder {
+            self.createNetworkClient = networkClientBuilder
+        }
     }
     
 }
