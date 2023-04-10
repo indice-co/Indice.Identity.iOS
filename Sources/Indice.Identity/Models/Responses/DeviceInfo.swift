@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct DeviceInfo: Codable {
+public struct DeviceInfo: Codable, Equatable {
     
     public var deviceId: String? = nil
     public var name: String? = nil

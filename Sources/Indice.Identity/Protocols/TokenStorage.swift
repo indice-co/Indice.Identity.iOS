@@ -1,6 +1,6 @@
 //
 //  TokenStorage.swift
-//  INOpenId
+//  Indice_Identity
 //
 //  Created by Nikolas Konstantakopoulos on 7/3/23.
 //

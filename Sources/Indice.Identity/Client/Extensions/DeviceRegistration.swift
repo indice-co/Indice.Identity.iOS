@@ -59,24 +59,28 @@ public class IdentityClientDeviceStatus: ObservableObject {
 }
 
 public protocol IdentityClientDeviceRegistration {
-    typealias OtpResult          = (otp: String?, aborted: Bool)
-    typealias OtpProvider        = (_ needsOtp: Bool) async -> OtpResult
     
-    typealias DeviceStatus       = IdentityClientDeviceStatus
+    typealias DeviceStatus = IdentityClientDeviceStatus
     
     var deviceStatus: DeviceStatus { get }
     
     /** Register or update a device, to be able to perform a **device\_authentication** grant with **pin** mode */
-    func registerDevice(withPin pin: String, otpChannel: TotpDeliveryChannel?, otpProvider: OtpProvider) async throws
+    func registerDevice(withPin pin: String, otpChannel: TotpDeliveryChannel?, otpProvider: CallbackType.OtpProvider) async throws
     
     /** Register or update a device, to be able to perform a **device\_authentication** grant with **fingerprint** mode */
-    func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel?, otpProvider: OtpProvider) async throws
+    func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel?, otpProvider: CallbackType.OtpProvider) async throws
     
     /** Remove a device pin registration */
     func removeRegistrationDevicePin() async
     
     /** Remove a fingerprint registration */
     func removeRegistrationFingerprint() async
+    
+    /** Trigger enable current device's trust status */
+    func enableDeviceTrust(deviceSelection: CallbackType.DeviceSelection) async throws
+    
+    /** Remove current device's trust status */
+    func removeDeviceTrust() async throws
 }
 
 
@@ -85,7 +89,7 @@ extension IdentityClient: IdentityClientDeviceRegistration {
     
     public var deviceRegistrationService: DeviceRegistration { self }
     
-    public func registerDevice(withPin pin: String, otpChannel: TotpDeliveryChannel? = nil, otpProvider: OtpProvider) async throws {
+    public func registerDevice(withPin pin: String, otpChannel: TotpDeliveryChannel? = nil, otpProvider: CallbackType.OtpProvider) async throws {
         do {
             _ = CryptoUtils.deleteKeyPair(locked: false, tagged: .devicePin)
             let keys = try CryptoUtils.createKeyPair(locked: false, tagged: .devicePin)
@@ -107,7 +111,7 @@ extension IdentityClient: IdentityClientDeviceRegistration {
             
             // TODO: Handle errors and stuff
             // Should this throw something?
-            if otpResult.aborted { deviceStatus.hasDevicePin = false; return }
+            if otpResult.isAborted { deviceStatus.hasDevicePin = false; return }
             
             let registration = try await deviceRepository.complete(registrationRequest: .pin(code: response.challenge,
                                                                                              codeVerifier: verifier,
@@ -115,7 +119,7 @@ extension IdentityClient: IdentityClientDeviceRegistration {
                                                                                              deviceIds: deviceIds,
                                                                                              deviceInfo: deviceInfo,
                                                                                              devicePin: devicePin,
-                                                                                             otp: otpResult.otp))
+                                                                                             otp: otpResult.otpValue))
             
             thisDeviceRepository.update(registrationId: registration.registrationId)
         } catch {
@@ -127,7 +131,7 @@ extension IdentityClient: IdentityClientDeviceRegistration {
     }
     
     
-    public func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel?, otpProvider: (Bool) async -> OtpResult) async throws {
+    public func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel? = nil, otpProvider: (Bool) async -> CallbackType.OtpResult) async throws {
         do {
             _ = CryptoUtils.deleteKeyPair(locked: true, tagged: .fingerprint)
             let keys = try CryptoUtils.createKeyPair(locked: true, tagged: .fingerprint)
@@ -150,7 +154,7 @@ extension IdentityClient: IdentityClientDeviceRegistration {
             
             
             // TODO: Should this throw something?
-            if otpResult.aborted { deviceStatus.hasFingerprint = false; return }
+            if otpResult.isAborted { deviceStatus.hasFingerprint = false; return }
             
             let registration = try await deviceRepository.complete(registrationRequest: .biometric(code: response.challenge,
                                                                                                    codeVerifier: verifier,
@@ -158,7 +162,7 @@ extension IdentityClient: IdentityClientDeviceRegistration {
                                                                                                    deviceIds: deviceIds,
                                                                                                    deviceInfo: deviceInfo,
                                                                                                    publicPem: devicePem,
-                                                                                                   otp: otpResult.otp))
+                                                                                                   otp: otpResult.otpValue))
             
             thisDeviceRepository.update(registrationId: registration.registrationId)
         } catch {
@@ -176,6 +180,49 @@ extension IdentityClient: IdentityClientDeviceRegistration {
     public func removeRegistrationFingerprint() async {
         CryptoUtils.deleteKeyPair(locked: true, tagged: .fingerprint)
         deviceStatus.hasFingerprint = false
+    }
+ 
+    public func enableDeviceTrust(deviceSelection: CallbackType.DeviceSelection) async throws {
+        let ids = thisDeviceRepository.ids
+        
+        if devicesInfo.userDevices == nil {
+            try await deviceManagementService.refreshDevices()
+        }
+        
+        let maxTrustedCount = 1 // TODO: Get from API?
+        let devices = (devicesInfo.userDevices ?? []).filter {
+            $0.deviceId != ids.device
+        }
+            
+        let currentTrustedCount = devices.filter {
+            $0.isTrusted == true
+        }.count
+        
+        let swapDeviceId: String? = await {
+            if currentTrustedCount >= maxTrustedCount {
+                if case .swap(let deviceInfo) = await deviceSelection(devices) {
+                    return deviceInfo.deviceId
+                } else {
+                    // TODO: this should throw something here?
+                    return nil
+                }
+            }
+            
+            return nil
+        }()
+        
+        try await deviceRepository.trust(deviceId: ids.device, bySwappingWith: swapDeviceId)
+        
+        try await updateDeviceWith(deviceId: ids.device)
+        
+        if let swapDeviceId { try await updateDeviceWith(deviceId: swapDeviceId) }
+    }
+    
+    public func removeDeviceTrust() async throws {
+        let deviceId = thisDeviceRepository.ids.device
+        
+        try await deviceRepository.unTrust(deviceId: deviceId)
+        try await updateDeviceWith(deviceId: deviceId)
     }
     
 }

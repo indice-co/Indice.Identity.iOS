@@ -8,22 +8,20 @@
 import Foundation
 
 public struct UserInfo: Codable {
-    public let id: String?
-    public let firstName: String?
-    public let lastName: String?
-    public let emailConfirmed: Bool?
-    public let phoneNumberConfirmed: Bool?
-    public let lockoutEnabled: Bool?
-    public let twoFactorEnabled: Bool?
-    public let createDate: Date?
-    public let lockoutEnd: Date?
-    public let email: String?
-    public let phoneNumber: String?
-    public let userName: String?
-    public let blocked: Bool?
-    public let passwordExpirationPolicy: PasswordExpirationPolicy?
-    public let isAdmin: Bool?
-    public let accessFailedCount: Int?
-    public let lastSignInDate: Date?
-    public let passwordExpirationDate: Date?
+    public let sub: String
+    public let name: String?
+    public let given_name: String?
+    public let family_name: String?
+    public var profile_id: String?
+    public var otp_channel: TotpDeliveryChannel?
+    public var otp_channel_disabled: String?
+    public var password_expiration_date: Date?
+    public var password_expiration_policy: PasswordExpirationPolicy?
+    public var admin: Bool?
+    public var preferred_username: String?
+    public var email: String?
+    public var email_verified: Bool?
+    public var phone_number: String?
+    public var phone_number_verified: Bool?
+    public var max_devices_count: String?
 }

@@ -9,7 +9,7 @@ import Foundation
 
 public struct PasswordRuleInfo: Decodable {
     public let code: String?
-    public let description: String?
-    public let requirement: String?
+    public let description: String
+    public let requirement: String
     public let isValid: Bool
 }

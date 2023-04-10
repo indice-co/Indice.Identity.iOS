@@ -17,4 +17,17 @@ public struct RegisterUserRequest: Codable {
     public let phoneNumber: String?
     public let hasReadPrivacyPolicy: Bool
     public let hasAcceptedTerms: Bool
+    
+    public init(firstName: String?, lastName: String?, userName: String, password: String, passwordConfirmation: String, email: String, phoneNumber: String?, hasReadPrivacyPolicy: Bool, hasAcceptedTerms: Bool) {
+        self.firstName = firstName
+        self.lastName = lastName
+        self.userName = userName
+        self.password = password
+        self.passwordConfirmation = passwordConfirmation
+        self.email = email
+        self.phoneNumber = phoneNumber
+        self.hasReadPrivacyPolicy = hasReadPrivacyPolicy
+        self.hasAcceptedTerms = hasAcceptedTerms
+    }
+    
 }

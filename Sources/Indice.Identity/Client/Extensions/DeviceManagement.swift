@@ -147,7 +147,7 @@ extension IdentityClient: IdentityClientDeviceManagement {
 
 // MARK: Private helpers
 
-private extension IdentityClient /* IdentityClientDeviceManagement extensions */ {
+internal extension IdentityClient /* IdentityClientDeviceManagement extensions */ {
     func updateFetchDeviceList() async throws {
         devicesInfo.userDevices = try await deviceRepository.devices().items
     }
