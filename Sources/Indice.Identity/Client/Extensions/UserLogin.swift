@@ -56,8 +56,8 @@ extension IdentityClient: IdentityClientLogin {
     public func login(withGrant grant: OAuth2Grant) async throws {
         tokenStorage.parse(try await authRepository.authorize(grant: grant))
         
-        try await refreshUserInfo()
-        try await refreshDevices()
+        // try await refreshUserInfo()
+        // try await refreshDevices()
     }
     
     public func login(username: String, password: String) async throws {
