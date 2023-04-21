@@ -16,8 +16,9 @@ public protocol Client {
 
 public extension Client {
     var basicAuth: String { get {
-       "Basic " + id + ":" + (secret ?? "")
-            .data(using: .utf8)!
-            .base64EncodedString()
+       "Basic " +
+            (id + ":" + (secret ?? ""))
+                .data(using: .utf8)!
+                .base64EncodedString()
     } }
 }
