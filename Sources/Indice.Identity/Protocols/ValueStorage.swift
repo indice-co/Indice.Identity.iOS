@@ -8,7 +8,11 @@
 import Foundation
 
 public struct ValueStorageKey {
-    let name: String
+    public let name: String
+    
+    public init(name: String) {
+        self.name = name
+    }
 }
 
 public protocol ValueStorage: AnyObject {
