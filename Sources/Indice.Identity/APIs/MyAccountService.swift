@@ -65,6 +65,16 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
         return result
     }
     
+    public func update(password: UpdatePasswordRequest) async throws {
+        let request = URLRequest.builder()
+            .put(path: authorization.baseUrl + "/api/my/account/passwprd")
+            .bodyJson(of: password)
+            .add(header: .accept(type: .json))
+            .build()
+        
+        try await networkClient.fetch(request: request)
+    }
+    
     public func update(email emailRequest: UpdateEmailRequest) async throws {
         let request = URLRequest.builder()
             .put(path: authorization.baseUrl + "/api/my/account/email")

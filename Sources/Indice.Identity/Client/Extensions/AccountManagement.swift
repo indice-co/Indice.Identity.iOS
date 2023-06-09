@@ -15,6 +15,9 @@ public protocol IdentityClientUserVerification {
     
     /** Update  the user's current email */
     func update(email: String, otpChannel: TotpDeliveryChannel?) async throws
+    
+    /** Update the user's current password */
+    func update(password: UpdatePasswordRequest) async throws
 }
 
 extension IdentityClient : IdentityClientUserVerification {
@@ -39,6 +42,10 @@ extension IdentityClient : IdentityClientUserVerification {
         try await accountRepository.update(email: .init(email: email, returnUrl: nil /* Set return URL? */))
         // TODO: Complete flow here?
         // User would go to mail, and then manually return to the app to check if their mail is verified.
+    }
+    
+    public func update(password passwordRequest: UpdatePasswordRequest) async throws {
+        try await accountRepository.update(password: passwordRequest)
     }
         
 }

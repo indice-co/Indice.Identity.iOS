@@ -42,6 +42,7 @@ public protocol MyAccountRepository: AnyObject {
     func verify(password: ValidatePasswordRequest) async throws -> CredentialsValidationInfo
     func verify(username: ValidateUsernameRequest) async throws -> UsernameStateInfo
     
+    func update(password: UpdatePasswordRequest) async throws
     func update(email: UpdateEmailRequest) async throws
     func update(phone: UpdatePhoneRequest) async throws
     func verifyEmail(with: OtpTokenRequest) async throws
