@@ -67,7 +67,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
     
     public func update(password: UpdatePasswordRequest) async throws {
         let request = URLRequest.builder()
-            .put(path: authorization.baseUrl + "/api/my/account/passwprd")
+            .put(path: authorization.baseUrl + "/api/my/account/password")
             .bodyJson(of: password)
             .add(header: .accept(type: .json))
             .build()
