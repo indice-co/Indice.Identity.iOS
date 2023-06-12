@@ -22,6 +22,8 @@ public protocol IdentityClientUserVerification {
 
 extension IdentityClient : IdentityClientUserVerification {
     
+    public typealias UserVerification = IdentityClientUserVerification
+    
     public func update(phone: String, otpChannel: TotpDeliveryChannel? = nil, otpProvider: CallbackType.OtpProvider) async throws {
         
         try await accountRepository.update(phone: .init(phoneNumber: phone, deliveryChannel: otpChannel))
