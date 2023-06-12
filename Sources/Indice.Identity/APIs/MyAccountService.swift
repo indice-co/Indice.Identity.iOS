@@ -65,6 +65,25 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
         return result
     }
     
+    public func forgot(password forgotPasswordRequest: ForgotPasswordRequest) async throws {
+        let request = URLRequest.builder()
+            .post(path: authorization.baseUrl + "/account/forgot-password")
+            .bodyJson(of: forgotPasswordRequest)
+            .build()
+        
+        try await networkClient.fetch(request: request)
+    }
+    
+    public func forgot(passwordConfirmation confirmationRequest: ForgotPasswordConfirmation) async throws {
+        let request = URLRequest.builder()
+            .put(path: authorization.baseUrl + "/account/forgot-password/confirmation")
+            .bodyJson(of: confirmationRequest)
+            .build()
+        
+        try await networkClient.fetch(request: request)
+    }
+    
+    
     public func update(password: UpdatePasswordRequest) async throws {
         let request = URLRequest.builder()
             .put(path: authorization.baseUrl + "/api/my/account/password")
