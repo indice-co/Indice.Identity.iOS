@@ -105,6 +105,9 @@ extension IdentityClient: IdentityClientDeviceRegistration {
             let response = try await deviceRepository.initialize(authRequest: .pinInit(codeChallenge: verifierHash,
                                                                                        deviceIds: deviceIds,
                                                                                        client: client))
+            
+            let signedVerifier = try CryptoUtils.sign(string: response.challenge, with: keys)
+            
             // TODO: pass the status of the otp need.
             let otpResult = await otpProvider(true)
             
@@ -115,7 +118,7 @@ extension IdentityClient: IdentityClientDeviceRegistration {
             
             let registration = try await deviceRepository.complete(registrationRequest: .pin(code: response.challenge,
                                                                                              codeVerifier: verifier,
-                                                                                             codeSignature: verifierHash,
+                                                                                             codeSignature: signedVerifier,
                                                                                              deviceIds: deviceIds,
                                                                                              deviceInfo: deviceInfo,
                                                                                              devicePin: devicePin,
@@ -149,6 +152,8 @@ extension IdentityClient: IdentityClientDeviceRegistration {
             let response = try await deviceRepository.initialize(authRequest: .biometrictInit(codeChallenge: verifierHash,
                                                                                               deviceIds: deviceIds,
                                                                                               client: client))
+            let signedVerifier = try CryptoUtils.sign(string: response.challenge, with: keys)
+            
             // TODO: pass the status of the otp need.
             let otpResult = await otpProvider(true)
             
@@ -158,7 +163,7 @@ extension IdentityClient: IdentityClientDeviceRegistration {
             
             let registration = try await deviceRepository.complete(registrationRequest: .biometric(code: response.challenge,
                                                                                                    codeVerifier: verifier,
-                                                                                                   codeSignature: verifierHash,
+                                                                                                   codeSignature: signedVerifier,
                                                                                                    deviceIds: deviceIds,
                                                                                                    deviceInfo: deviceInfo,
                                                                                                    publicPem: devicePem,

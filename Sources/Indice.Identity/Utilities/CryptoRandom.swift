@@ -16,9 +16,9 @@ final class CryptoRandom {
     class func base64URLEncode<S>(bytes: S) -> String where S : Sequence, UInt8 == S.Element {
         Data(bytes)
             .base64EncodedString()                    // Regular base64 encoder
-            .replacingOccurrences(of: "=", with: "")  // Remove any trailing '='s
             .replacingOccurrences(of: "+", with: "-") // 62nd char of encoding
             .replacingOccurrences(of: "/", with: "_") // 63rd char of encoding
+            .replacingOccurrences(of: "=", with: "")  // Remove any trailing '='s
             .trimmingCharacters(in: .whitespaces)
     }
     
