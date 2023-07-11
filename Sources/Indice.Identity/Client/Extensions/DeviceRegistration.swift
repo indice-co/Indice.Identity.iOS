@@ -70,6 +70,8 @@ public protocol IdentityClientDeviceRegistration {
     /** Register or update a device, to be able to perform a **device\_authentication** grant with **fingerprint** mode */
     func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel?, otpProvider: CallbackType.OtpProvider) async throws
     
+    func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> ()
+    
     /** Remove a device pin registration */
     func removeRegistrationDevicePin() async
     
@@ -133,7 +135,51 @@ extension IdentityClient: IdentityClientDeviceRegistration {
         deviceStatus.hasDevicePin = true
     }
     
+    public func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel? = nil) async throws -> (CallbackType.OtpResult) async throws -> () {
+        do {
+            _ = CryptoUtils.deleteKeyPair(locked: true, tagged: .fingerprint)
+            let keys = try CryptoUtils.createKeyPair(locked: true, tagged: .fingerprint)
+            
+            let verifier     = CryptoRandom.uniqueId()
+            let verifierHash = CryptoUtils.challenge(for: verifier)
+            let deviceIds    = thisDeviceRepository.ids
+            let deviceInfo   = thisDeviceRepository.info
+            let devicePem    = try CryptoUtils.pem(for: keys)
+            
+            /* TODO: This request could have an OTP side-effect.
+             Find a nice way to decide if it will and pass it to the OTP provider?
+             */
+            
+            let response = try await deviceRepository.initialize(authRequest: .biometrictInit(codeChallenge: verifierHash,
+                                                                                              deviceIds: deviceIds,
+                                                                                              client: client))
+            let signedVerifier = try CryptoUtils.sign(string: response.challenge, with: keys)
+
+            return { [weak self] otpResult in
+                guard let self = self else { return }
+                do {
+                    let registration = try await self.deviceRepository.complete(registrationRequest: .biometric(code: response.challenge,
+                                                                                                                codeVerifier: verifier,
+                                                                                                                codeSignature: signedVerifier,
+                                                                                                                deviceIds: deviceIds,
+                                                                                                                deviceInfo: deviceInfo,
+                                                                                                                publicPem: devicePem,
+                                                                                                                otp: otpResult.otpValue))
+                    
+                    self.thisDeviceRepository.update(registrationId: registration.registrationId)
+                } catch {
+                    self.deviceStatus.hasFingerprint = false
+                    throw error
+                }
+            }
+            
+        } catch {
+            deviceStatus.hasFingerprint = false
+            throw error
+        }
+    }
     
+
     public func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel? = nil, otpProvider: (Bool) async -> CallbackType.OtpResult) async throws {
         do {
             _ = CryptoUtils.deleteKeyPair(locked: true, tagged: .fingerprint)
