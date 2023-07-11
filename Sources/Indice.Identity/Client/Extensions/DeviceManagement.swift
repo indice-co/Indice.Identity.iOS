@@ -71,17 +71,17 @@ extension IdentityClient: IdentityClientDeviceManagement {
             } else { return true }
         }()
         
-        let ids  = thisDeviceRepository.ids
-        
         if isRegistered {
+            let ids = thisDeviceRepository.ids
             try await deviceRepository.update(deviceId: ids.device,
                                               with: .from(service: thisDeviceRepository,
                                                           pnsHandle: pnsHandle,
                                                           customTags: tags))
         } else {
+            thisDeviceRepository.resetIds()
             try await deviceRepository.create(device: .from(service: thisDeviceRepository,
-                                                         pnsHandle: pnsHandle,
-                                                         customTags: tags))
+                                                            pnsHandle: pnsHandle,
+                                                            customTags: tags))
         }
         
         try await updateFetchDeviceList()
