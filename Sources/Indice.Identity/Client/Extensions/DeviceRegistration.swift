@@ -65,11 +65,42 @@ public protocol IdentityClientDeviceRegistration {
     var deviceStatus: DeviceStatus { get }
     
     /** Register or update a device, to be able to perform a **device\_authentication** grant with **pin** mode */
+    @available(*, deprecated, message: "Use the  registerDevice(withPin:otpChannel:) async throws -> (CallbackType.OtpResult) async throws -> ()")
     func registerDevice(withPin pin: String, otpChannel: TotpDeliveryChannel?, otpProvider: CallbackType.OtpProvider) async throws
+        
+    /**
+     Register or update a device, to be able to perform a **device\_authentication** grant with **pin** mode
+     This method returns a **lambda** that, provided with on otp, completes the device pin registration.
+     ```
+     
+     let pin: String = makePin()
+     let continuation = try await registerDevice(withPin: pin)
+     
+     // If success show otp input
+     try await continuation(otpResult)
+     
+     ```
+     It is not necessary to call the continuation with an OtpResult.aborted result but it is recommended.
+     */
+    func registerDevice(withPin pin: String, otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> ()
     
+    
+    @available(*, deprecated, message: "Use the registerDeviceFingerprint(otpChannel:) async throws -> (CallbackType.OtpResult) async throws -> ()")
     /** Register or update a device, to be able to perform a **device\_authentication** grant with **fingerprint** mode */
     func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel?, otpProvider: CallbackType.OtpProvider) async throws
     
+    /**
+     Register or update a device, to be able to perform a **device\_authentication** grant with **fingerprint** mode
+     This method returns a **lambda** that, provided with on otp, completes the device fingerprint registration.
+     ```
+     
+     let continuation = try await registerDeviceFingerprint()
+     // If success show otp input
+     try await continuation(otpResult)
+     
+     ```
+     It is not necessary to call the continuation with an OtpResult.aborted result but it is recommended.
+     */
     func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> ()
     
     /** Remove a device pin registration */
@@ -134,6 +165,51 @@ extension IdentityClient: IdentityClientDeviceRegistration {
         
         deviceStatus.hasDevicePin = true
     }
+    
+    
+    public func registerDevice(withPin pin: String, otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> () {
+        do {
+            _ = CryptoUtils.deleteKeyPair(locked: false, tagged: .devicePin)
+            let keys = try CryptoUtils.createKeyPair(locked: false, tagged: .devicePin)
+            
+            let verifier     = CryptoRandom.uniqueId()
+            let verifierHash = CryptoUtils.challenge(for: verifier)
+            let deviceIds    = thisDeviceRepository.ids
+            let deviceInfo   = thisDeviceRepository.info
+            let devicePin    = try CryptoUtils.prepare(pin: pin, withDeviceId: deviceIds.device, and: keys)
+            /* TODO: This request could have an OTP side-effect.
+             Find a nice way to decide if it will and pass it to the OTP provider?
+             */
+            let response = try await deviceRepository.initialize(authRequest: .pinInit(codeChallenge: verifierHash,
+                                                                                       deviceIds: deviceIds,
+                                                                                       client: client))
+            
+            let signedVerifier = try CryptoUtils.sign(string: response.challenge, with: keys)
+            
+            return { [weak self] otpResult in
+                guard let self = self else { return }
+                do {
+                    let registration = try await deviceRepository.complete(registrationRequest: .pin(code: response.challenge,
+                                                                                                     codeVerifier: verifier,
+                                                                                                     codeSignature: signedVerifier,
+                                                                                                     deviceIds: deviceIds,
+                                                                                                     deviceInfo: deviceInfo,
+                                                                                                     devicePin: devicePin,
+                                                                                                     otp: otpResult.otpValue))
+                    
+                    self.thisDeviceRepository.update(registrationId: registration.registrationId)
+                } catch {
+                    self.deviceStatus.hasFingerprint = false
+                    throw error
+                }
+            }
+            
+        } catch {
+            deviceStatus.hasFingerprint = false
+            throw error
+        }
+    }
+    
     
     public func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel? = nil) async throws -> (CallbackType.OtpResult) async throws -> () {
         do {
