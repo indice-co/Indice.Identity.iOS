@@ -203,7 +203,6 @@ extension IdentityClient: IdentityClientDeviceRegistration {
                     throw error
                 }
             }
-            
         } catch {
             deviceStatus.hasFingerprint = false
             throw error
@@ -248,7 +247,6 @@ extension IdentityClient: IdentityClientDeviceRegistration {
                     throw error
                 }
             }
-            
         } catch {
             deviceStatus.hasFingerprint = false
             throw error
@@ -256,7 +254,7 @@ extension IdentityClient: IdentityClientDeviceRegistration {
     }
     
 
-    public func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel? = nil, otpProvider: (Bool) async -> CallbackType.OtpResult) async throws {
+    public func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel? = nil, otpProvider: CallbackType.OtpProvider) async throws {
         do {
             _ = CryptoUtils.deleteKeyPair(locked: true, tagged: .fingerprint)
             let keys = try CryptoUtils.createKeyPair(locked: true, tagged: .fingerprint)

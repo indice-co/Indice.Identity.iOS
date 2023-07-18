@@ -13,6 +13,8 @@ public protocol IdentityClientUserVerification {
     /** Update  the user's current phone number */
     func update(phone: String, otpChannel: TotpDeliveryChannel?, otpProvider: CallbackType.OtpProvider) async throws
     
+    func update(phone: String, otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> ()
+    
     /** Update  the user's current email */
     func update(email: String, otpChannel: TotpDeliveryChannel?) async throws
     
@@ -37,6 +39,19 @@ extension IdentityClient : IdentityClientUserVerification {
         
         try await accountRepository.verifyPhone(with: .init(token: value))
         try await userService.refreshUserInfo()
+    }
+    
+    
+    public func update(phone: String, otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> () {
+        try await accountRepository.update(phone: .init(phoneNumber: phone, deliveryChannel: otpChannel))
+        
+        return { [weak self] otpResult in
+            guard let self = self else { return }
+            guard let otp = otpResult.otpValue else { return }
+            
+            try await accountRepository.verifyPhone(with: .init(token: otp))
+        }
+        
     }
     
     
