@@ -48,7 +48,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
         let result: UsernameStateInfo = try await {
             do {
                 try await networkClient.fetch(request: request)
-                return UsernameStateInfo(result: .available)
+                return UsernameStateInfo(result: .unavailable)
             } catch {
                 guard let code = (error as? APIError)?.statusCode else {
                     throw error
