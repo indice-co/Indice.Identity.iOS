@@ -7,6 +7,26 @@
 
 import Foundation
 
+/** 
+ A simple wrapper around a string to be used as a key with the ``ValueStorage``.
+ 
+ ```
+ extension ValueStorageKey {
+ 
+     static var someKeyName: ValueStorageKey = .init(name: "some_key_name")
+ }
+ 
+ let storage = UserDefaults.standard
+ 
+ storage.store(value: true, forKey: .someKeyName)
+ let someKeyValue = storage.readBool(forKey: .someKeyName)
+ 
+ ```
+ 
+ Main reasons for this existing is:
+    - Type the key name once
+    - The **.value** syntax, is faster to write as you omit the class type!!
+ */
 public struct ValueStorageKey {
     public let name: String
     
@@ -15,6 +35,12 @@ public struct ValueStorageKey {
     }
 }
 
+/**
+ A storage interface that can store and read values.
+ Its purpose is to be used by the ``IdentityClient`` to store persistent values.
+
+ UseDefaults conform to this protocol, and are used as the default implementation within the library.
+ */
 public protocol ValueStorage: AnyObject {
     typealias Key = ValueStorageKey
     

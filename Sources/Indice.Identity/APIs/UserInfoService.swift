@@ -10,17 +10,17 @@ import IndiceNetworkClient
 
 class UserInfoRepositoryImpl: UserInfoRepository {
     
-    private let authorization: Authorization
+    private let configuration: IdentityConfig
     private let networkClient: NetworkClient
     
-    init(authorization: Authorization, networkClient: NetworkClient) {
-        self.authorization = authorization
+    init(configuration: IdentityConfig, networkClient: NetworkClient) {
+        self.configuration = configuration
         self.networkClient = networkClient
     }
     
     func userInfo() async throws -> UserInfo {
         let request = URLRequest.builder()
-            .get(path: authorization.baseUrl + "/connect/userinfo")
+            .get(path: configuration.baseUrl + "/connect/userinfo")
             .add(header: .accept(type: .json))
             .build()
         

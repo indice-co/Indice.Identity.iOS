@@ -11,18 +11,18 @@ import IndiceNetworkClient
 
 public class MyAccountRepositoryImpl : MyAccountRepository {
     
-    private let authorization: Authorization
+    private let configuration: IdentityConfig
     private let networkClient: NetworkClient
     
-    public init(authorization: Authorization, networkClient: NetworkClient) {
-        self.authorization = authorization
+    public init(configuration: IdentityConfig, networkClient: NetworkClient) {
+        self.configuration = configuration
         self.networkClient = networkClient
     }
     
     
     public func register(request registerRequest: RegisterUserRequest) async throws {
         let request = URLRequest.builder()
-            .post(path: authorization.baseUrl + "/api/account/register")
+            .post(path: configuration.baseUrl + "/api/account/register")
             .bodyJson(of: registerRequest)
             .add(header: .accept(type: .json))
             .build()
@@ -32,7 +32,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
     
     public func verify(password passwordRequest: ValidatePasswordRequest) async throws -> CredentialsValidationInfo {
         let request = URLRequest.builder()
-            .post(path: authorization.baseUrl + "/api/account/validate-password")
+            .post(path: configuration.baseUrl + "/api/account/validate-password")
             .bodyJson(of: passwordRequest)
             .build()
         
@@ -41,7 +41,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
     
     public func verify(username usernameRequest: ValidateUsernameRequest) async throws -> UsernameStateInfo {
         let request = URLRequest.builder()
-            .post(path: authorization.baseUrl + "/api/account/username-exists")
+            .post(path: configuration.baseUrl + "/api/account/username-exists")
             .bodyJson(of: usernameRequest)
             .build()
         
@@ -67,7 +67,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
     
     public func forgot(password forgotPasswordRequest: ForgotPasswordRequest) async throws {
         let request = URLRequest.builder()
-            .post(path: authorization.baseUrl + "/api/account/forgot-password")
+            .post(path: configuration.baseUrl + "/api/account/forgot-password")
             .bodyJson(of: forgotPasswordRequest)
             .build()
         
@@ -76,7 +76,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
     
     public func forgot(passwordConfirmation confirmationRequest: ForgotPasswordConfirmation) async throws {
         let request = URLRequest.builder()
-            .put(path: authorization.baseUrl + "/api/account/forgot-password/confirmation")
+            .put(path: configuration.baseUrl + "/api/account/forgot-password/confirmation")
             .bodyJson(of: confirmationRequest)
             .build()
         
@@ -86,7 +86,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
     
     public func update(password: UpdatePasswordRequest) async throws {
         let request = URLRequest.builder()
-            .put(path: authorization.baseUrl + "/api/my/account/password")
+            .put(path: configuration.baseUrl + "/api/my/account/password")
             .bodyJson(of: password)
             .add(header: .accept(type: .json))
             .build()
@@ -96,7 +96,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
     
     public func update(email emailRequest: UpdateEmailRequest) async throws {
         let request = URLRequest.builder()
-            .put(path: authorization.baseUrl + "/api/my/account/email")
+            .put(path: configuration.baseUrl + "/api/my/account/email")
             .bodyJson(of: emailRequest)
             .add(header: .accept(type: .json))
             .build()
@@ -106,7 +106,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
     
     public func update(phone phoneRequest: UpdatePhoneRequest) async throws {
         let request = URLRequest.builder()
-            .put(path: authorization.baseUrl + "/api/my/account/phone-number")
+            .put(path: configuration.baseUrl + "/api/my/account/phone-number")
             .bodyJson(of: phoneRequest)
             .add(header: .accept(type: .json))
             .build()
@@ -116,7 +116,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
     
     public func verifyEmail(with otpRequest: OtpTokenRequest) async throws {
         let request = URLRequest.builder()
-            .put(path: authorization.baseUrl + "/api/my/account/email/confirmation")
+            .put(path: configuration.baseUrl + "/api/my/account/email/confirmation")
             .bodyJson(of: otpRequest)
             .add(header: .accept(type: .json))
             .build()
@@ -126,7 +126,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
     
     public func verifyPhone(with otpRequest: OtpTokenRequest) async throws {
         let request = URLRequest.builder()
-            .put(path: authorization.baseUrl + "/api/my/account/phone-number/confirmation")
+            .put(path: configuration.baseUrl + "/api/my/account/phone-number/confirmation")
             .bodyJson(of: otpRequest)
             .add(header: .accept(type: .json))
             .build()

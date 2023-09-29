@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-public class IdentityClientDevicesInfo {
+public class DevicesData {
     @Published
     public internal(set)
     var userDevices: [DeviceInfo]? = nil
@@ -16,31 +16,14 @@ public class IdentityClientDevicesInfo {
     @Published
     public internal(set)
     var thisDevice: DeviceInfo? = nil
-    
-    private var devicesCancellation: AnyCancellable? = nil
-    private let thisDeviceRepository: ThisDeviceRepository
-    
-    init(thisDeviceRepository: ThisDeviceRepository) {
-        self.thisDeviceRepository = thisDeviceRepository
-        
-        self.devicesCancellation = self.$userDevices
-            .sink { [weak self] devices in
-                guard let self = self else { return }
-                let deviceId = self.thisDeviceRepository
-                    .ids
-                    .device
-                
-                self.thisDevice = devices?.first(where: {
-                    $0.deviceId == deviceId
-                })
-            }
-    }
 }
 
-public protocol IdentityClientDeviceManagement {
-    typealias DevicesInfo = IdentityClientDevicesInfo
+/**
+ Manages the users devices. Provides info as bindable objects that the relevant UI can use.
+ */
+public protocol DevicesService: AnyObject {
     
-    var devicesInfo: DevicesInfo { get }
+    var devicesInfo: DevicesData { get }
     
     func refreshDevices() async throws
     
@@ -57,11 +40,38 @@ public protocol IdentityClientDeviceManagement {
     func removeCurrentDeviceTrust() async throws
 }
 
+internal protocol DevicesServiceInternal: DevicesService {
+    func updateFetchDeviceList() async throws
+    func updateDeviceWith(deviceId: String) async throws
+}
 
-extension IdentityClient: IdentityClientDeviceManagement {
-    public typealias DeviceManagement = IdentityClientDeviceManagement
+
+internal class DevicesServiceImpl: DevicesService {
+
+    public let devicesInfo: DevicesData = .init()
     
-    public var deviceManagementService: DeviceManagement { self }
+    private let thisDeviceRepository: ThisDeviceRepository
+    private let devicesRepository: DevicesRepository
+    private var devicesCancellation: AnyCancellable? = nil
+    
+    init(thisDeviceRepository: ThisDeviceRepository, devicesRepository: DevicesRepository) {
+        self.thisDeviceRepository = thisDeviceRepository
+        self.devicesRepository = devicesRepository
+        
+        self.devicesCancellation = self.devicesInfo.$userDevices
+            .sink { [weak self] devices in
+                guard let self = self else { return }
+                let deviceId = self.thisDeviceRepository
+                    .ids
+                    .device
+                
+                self.devicesInfo.thisDevice = devices?.first(where: {
+                    $0.deviceId == deviceId
+                })
+            }
+    }
+
+    
     
     public func updateThisDeviceRegistration(pnsHandle: String? = nil, tags: [String]? = nil) async throws {
         let isRegistered: Bool = try await {
@@ -73,13 +83,13 @@ extension IdentityClient: IdentityClientDeviceManagement {
         
         if isRegistered {
             let ids = thisDeviceRepository.ids
-            try await deviceRepository.update(deviceId: ids.device,
+            try await devicesRepository.update(deviceId: ids.device,
                                               with: .from(service: thisDeviceRepository,
                                                           pnsHandle: pnsHandle,
                                                           customTags: tags))
         } else {
             thisDeviceRepository.resetIds()
-            try await deviceRepository.create(device: .from(service: thisDeviceRepository,
+            try await devicesRepository.create(device: .from(service: thisDeviceRepository,
                                                             pnsHandle: pnsHandle,
                                                             customTags: tags))
         }
@@ -88,7 +98,7 @@ extension IdentityClient: IdentityClientDeviceManagement {
     }
     
     public func delete(deviceId: String) async throws {
-        try await deviceRepository.delete(deviceId: deviceId)
+        try await devicesRepository.delete(deviceId: deviceId)
         
         devicesInfo.userDevices = devicesInfo.userDevices?.filter {
             $0.deviceId == deviceId
@@ -114,14 +124,14 @@ extension IdentityClient: IdentityClientDeviceManagement {
                 
                 // If a swap id needed, but no device is selected,
                 // throw an error as the trust cannot be offered.
-                throw Errors.TrustSwap
+                throw IdentityClient.Errors.TrustSwap
             }
             
             return nil
         }()
         
         // Trust current device and update any other needed.
-        try await deviceRepository.trust(deviceId: currentId, bySwappingWith: idToSwapWith)
+        try await devicesRepository.trust(deviceId: currentId, bySwappingWith: idToSwapWith)
         try await updateDeviceWith(deviceId: currentId)
         
         if let idToSwapWith {
@@ -132,7 +142,7 @@ extension IdentityClient: IdentityClientDeviceManagement {
     public func removeCurrentDeviceTrust() async throws {
         let currentId = thisDeviceRepository.ids.device
         
-        try await deviceRepository.unTrust(deviceId: currentId)
+        try await devicesRepository.unTrust(deviceId: currentId)
         try await updateDeviceWith(deviceId: currentId)
     }
  
@@ -147,13 +157,13 @@ extension IdentityClient: IdentityClientDeviceManagement {
 
 // MARK: Private helpers
 
-internal extension IdentityClient /* IdentityClientDeviceManagement extensions */ {
+extension DevicesServiceImpl: DevicesServiceInternal {
     func updateFetchDeviceList() async throws {
-        devicesInfo.userDevices = try await deviceRepository.devices().items
+        devicesInfo.userDevices = try await devicesRepository.devices().items
     }
 
     func updateDeviceWith(deviceId: String) async throws {
-        let newDevice = try await deviceRepository.device(byId: deviceId)
+        let newDevice = try await devicesRepository.device(byId: deviceId)
         var deviceList = devicesInfo.userDevices ?? []
         let devIndex  = devicesInfo.userDevices?.firstIndex(where: {
             $0.deviceId == newDevice.deviceId

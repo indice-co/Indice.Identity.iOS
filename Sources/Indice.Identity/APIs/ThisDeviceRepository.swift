@@ -16,6 +16,7 @@ private extension ValueStorageKey {
 // TODO: See if the INFO needs be a published/bindable item.
 internal class ThisDeviceRepositoryImpl: ThisDeviceRepository {
 
+    private let currentDeviceProvider: CurrentDeviceInfoProvider
     private let storage: ValueStorage
 
     var ids: Ids { get {
@@ -24,12 +25,15 @@ internal class ThisDeviceRepositoryImpl: ThisDeviceRepository {
     } }
 
     var info : Info { get {
-        .init(name: DeviceUtilities.name,
-              model: DeviceUtilities.model,
-              osVersion: DeviceUtilities.osVersion)
+        .init(name: currentDeviceProvider.name,
+              model: currentDeviceProvider.model,
+              osVersion: currentDeviceProvider.osVersion)
     } }
     
-    init(storage: ValueStorage) { self.storage = storage }
+    init(storage: ValueStorage, currentDeviceInfoProvider: CurrentDeviceInfoProvider) {
+        self.storage = storage
+        self.currentDeviceProvider = currentDeviceInfoProvider
+    }
     
     func resetIds() {
         storage.clearValue(forKey: .deviceIdKey)

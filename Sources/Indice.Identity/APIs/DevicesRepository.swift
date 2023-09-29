@@ -10,11 +10,11 @@ import IndiceNetworkClient
 
 public class DevicesRepositoryImpl: DevicesRepository {
 
-    let authorization : Authorization
+    let configuration : IdentityConfig
     let networkClient : NetworkClient
     
-    public init(authorization: Authorization, networkClient: NetworkClient) {
-        self.authorization = authorization
+    public init(configuration: IdentityConfig, networkClient: NetworkClient) {
+        self.configuration = configuration
         self.networkClient = networkClient
     }
     
@@ -27,7 +27,7 @@ public extension DevicesRepositoryImpl {
     
     func authorize(authRequest: DeviceAuthentication.AuthorizationRequest) async throws -> DeviceAuthentication.ChallengeResponse {
         let request = URLRequest.builder()
-            .post(path: authorization.deviceRegistration.authorizeEndpoint)
+            .post(path: configuration.deviceRegistration.authorizeEndpoint)
             .bodyFormUtf8(params: authRequest.asDict!)
             .add(header: .accept(type: .json))
             .build()
@@ -38,7 +38,7 @@ public extension DevicesRepositoryImpl {
     
     func initialize(authRequest: DeviceAuthentication.AuthorizationRequest) async throws -> DeviceAuthentication.ChallengeResponse {
         let request = URLRequest.builder()
-            .post(path: authorization.deviceRegistration.initializeEndpoint)
+            .post(path: configuration.deviceRegistration.initializeEndpoint)
             .bodyFormUtf8(params: authRequest.asDict!)
             .add(header: .accept(type: .json))
             .build()
@@ -49,7 +49,7 @@ public extension DevicesRepositoryImpl {
     
     func complete(registrationRequest: DeviceAuthentication.RegistrationRequest) async throws -> DeviceAuthentication.RegistrationResult {
         let request = URLRequest.builder()
-            .post(path: authorization.deviceRegistration.completionEndpoint)
+            .post(path: configuration.deviceRegistration.completionEndpoint)
             .bodyFormUtf8(params: registrationRequest.asDict!)
             .add(header: .accept(type: .json))
             .build()
@@ -65,7 +65,7 @@ public extension DevicesRepositoryImpl {
     
     func devices() async throws -> ResultSet<DeviceInfo> {
         let request = URLRequest.builder()
-            .get(path: authorization.baseUrl + "/api/my/devices")
+            .get(path: configuration.baseUrl + "/api/my/devices")
             .add(header: .accept(type: .json))
             .build()
         
@@ -74,7 +74,7 @@ public extension DevicesRepositoryImpl {
     
     func device(byId deviceId: String) async throws -> DeviceInfo {
         let request = URLRequest.builder()
-            .get(path: authorization.baseUrl + "/api/my/devices/\(deviceId)")
+            .get(path: configuration.baseUrl + "/api/my/devices/\(deviceId)")
             .add(header: .accept(type: .json))
             .build()
         
@@ -83,7 +83,7 @@ public extension DevicesRepositoryImpl {
     
     func create(device data: CreateDeviceRequest) async throws {
         let request = URLRequest.builder()
-            .post(path: authorization.baseUrl + "/api/my/devices")
+            .post(path: configuration.baseUrl + "/api/my/devices")
             .bodyJson(of: data)
             .add(header: .accept(type: .json))
             .build()
@@ -93,7 +93,7 @@ public extension DevicesRepositoryImpl {
     
     func update(deviceId: String, with data: UpdateDeviceRequest) async throws {
         let request = URLRequest.builder()
-            .put(path: authorization.baseUrl + "/api/my/devices/\(deviceId)")
+            .put(path: configuration.baseUrl + "/api/my/devices/\(deviceId)")
             .bodyJson(of: data)
             .add(header: .accept(type: .json))
             .build()
@@ -103,7 +103,7 @@ public extension DevicesRepositoryImpl {
     
     func delete(deviceId: String) async throws {
         let request = URLRequest.builder()
-            .delete(path: authorization.baseUrl + "/api/my/devices/\(deviceId)")
+            .delete(path: configuration.baseUrl + "/api/my/devices/\(deviceId)")
             .add(header: .accept(type: .json))
             .build()
         
@@ -122,7 +122,7 @@ public extension DevicesRepositoryImpl {
         }
         
         let request = URLRequest.builder()
-            .put(path: authorization.baseUrl + "/api/my/devices/\(deviceId)/trust")
+            .put(path: configuration.baseUrl + "/api/my/devices/\(deviceId)/trust")
             .bodyJson(of: SwapDeviceRequest(swapDeviceId: otherDeviceId))
             .add(header: .accept(type: .json))
             .build()
@@ -132,7 +132,7 @@ public extension DevicesRepositoryImpl {
     
     func unTrust(deviceId: String) async throws {
         let request = URLRequest.builder()
-            .put(path: authorization.baseUrl + "/api/my/devices/\(deviceId)/untrust")
+            .put(path: configuration.baseUrl + "/api/my/devices/\(deviceId)/untrust")
             .noBody()
             .add(header: .accept(type: .json))
             .build()

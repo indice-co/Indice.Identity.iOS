@@ -8,6 +8,16 @@
 import Foundation
 import CryptoKit
 
+internal struct SecKeyTags {
+    static let devicePin   = "indice.identity.devicepin.tag".data(using: .utf8)!
+    static let fingerprint = "indice.identity.fingerprint.tag".data(using: .utf8)!
+}
+
+internal extension CryptoUtils.TagData {
+    static var devicePin   : CryptoUtils.TagData { SecKeyTags.devicePin   }
+    static var fingerprint : CryptoUtils.TagData { SecKeyTags.fingerprint }
+}
+
 
 protocol KeyPair {
     var `public`  : SecKey { get }
@@ -127,7 +137,7 @@ private class SecHelper {
     
     static private let privateKeySize = 4096
     static private let pinKeyTag = "gr.indice.samples.flows.keys.sec-keys"
-    static private let bioKeyTag = "gr.indice.samples.keys.flows.bio-sec-keys"
+    static private let bioKeyTag = "gr.indice.samples.flows.bio-sec-keys"
     
     private init() {}
     

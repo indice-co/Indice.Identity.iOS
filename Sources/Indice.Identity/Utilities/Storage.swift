@@ -7,7 +7,7 @@
 
 import Foundation
 
-
+/** A token storage that keeps its values only as long as the instance exists. */
 public class EphemeralTokenStorage: TokenStorage {
     
     public private(set) var idToken: String?
@@ -33,5 +33,6 @@ public class EphemeralTokenStorage: TokenStorage {
 }
 
 public extension TokenStorage where Self == EphemeralTokenStorage {
+    /** A token storage that keeps its values only as long as the instance exists. */
     static var ephemeral: any TokenStorage { EphemeralTokenStorage() }
 }

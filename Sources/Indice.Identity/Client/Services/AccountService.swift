@@ -8,8 +8,8 @@
 import Foundation
 
 
-
-public protocol IdentityClientUserVerification {
+/** Service responsible for updating the users account */
+public protocol AccountService: AnyObject {
     /** Update  the user's current phone number */
     func update(phone: String, otpChannel: TotpDeliveryChannel?, otpProvider: CallbackType.OtpProvider) async throws
     
@@ -22,9 +22,16 @@ public protocol IdentityClientUserVerification {
     func update(password: UpdatePasswordRequest) async throws
 }
 
-extension IdentityClient : IdentityClientUserVerification {
+
+internal class AccountServiceImpl : AccountService {
     
-    public typealias UserVerification = IdentityClientUserVerification
+    private let accountRepository: MyAccountRepository
+    private let userService: UserService
+    
+    init(accountRepository: MyAccountRepository, userService: UserService) {
+        self.accountRepository = accountRepository
+        self.userService = userService
+    }
     
     public func update(phone: String, otpChannel: TotpDeliveryChannel? = nil, otpProvider: CallbackType.OtpProvider) async throws {
         

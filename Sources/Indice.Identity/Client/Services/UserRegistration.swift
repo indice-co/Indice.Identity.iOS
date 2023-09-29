@@ -8,17 +8,21 @@
 import Foundation
 import IndiceNetworkClient
 
-public protocol IdentityClientUserRegistration {
+/** Registers a new user and aids to the username/password verification prior. */
+public protocol UserRegistrationService {
     func register(request: RegisterUserRequest) async throws
     
     func verify(username: String) async throws -> UsernameStateInfo
     func verify(password: String) async throws -> [PasswordRuleInfo]
 }
 
-extension IdentityClient: IdentityClientUserRegistration {
-    public typealias UserRegistration = IdentityClientUserRegistration
+internal class UserRegistrationServiceImpl: UserRegistrationService {
+
+    private let accountRepository: MyAccountRepository
     
-    public var userRegistrationService: UserRegistration { self }
+    init(accountRepository: MyAccountRepository) {
+        self.accountRepository = accountRepository
+    }
     
     public func register(request: RegisterUserRequest) async throws {
         try await accountRepository.register(request: request)

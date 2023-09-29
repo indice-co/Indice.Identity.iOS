@@ -8,6 +8,8 @@
 import Foundation
 
 extension Collection {
+    
+    /** Return the collection only when it is not empty. */
     var nonEmpty: Self? {
         guard !isEmpty else {
             return nil

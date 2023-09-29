@@ -16,7 +16,7 @@ fileprivate extension ValueStorageKey {
 
 
 
-public class IdentityClientDeviceStatus: ObservableObject {
+public class DeviceStatus: ObservableObject {
     @Published
     public internal(set)
     var hasDevicePin: Bool = false
@@ -28,39 +28,14 @@ public class IdentityClientDeviceStatus: ObservableObject {
     @Published
     public internal(set)
     var hasQuickLogin: Bool = false
-    
-    private let valueStorage : ValueStorage
-    private var cancellables = Set<AnyCancellable>()
-    
-    init(valueStorage: ValueStorage) {
-        self.valueStorage = valueStorage
-        
-        self.hasDevicePin   = valueStorage.readBool(forKey: .devicePinKey)   ?? false
-        self.hasFingerprint = valueStorage.readBool(forKey: .fingerprintKey) ?? false
-        
-        self.$hasFingerprint
-            .sink { [weak self] newValue in
-                self?.valueStorage.store(value: newValue, forKey: .fingerprintKey)
-            }.store(in: &cancellables)
-        
-        self.$hasDevicePin
-            .sink { [weak self] newValue in
-                self?.valueStorage.store(value: newValue, forKey: .devicePinKey)
-            }.store(in: &cancellables)
-        
-        self.$hasFingerprint
-            .combineLatest(self.$hasDevicePin)
-            .map { $0 || $1 }
-            .sink(receiveValue: { [weak self] result in
-                self?.hasQuickLogin = result
-            })
-            .store(in: &cancellables)
-    }
+
 }
 
-public protocol IdentityClientDeviceRegistration {
-    
-    typealias DeviceStatus = IdentityClientDeviceStatus
+/** 
+ Service responsible for managing the current device's authorization state.
+ Registers and removes anything necessary for fingerprint and 4pin authorization.
+ */
+public protocol DeviceRegistrationService {
     
     var deviceStatus: DeviceStatus { get }
     
@@ -117,10 +92,52 @@ public protocol IdentityClientDeviceRegistration {
 }
 
 
-extension IdentityClient: IdentityClientDeviceRegistration {
-    public typealias DeviceRegistration = IdentityClientDeviceRegistration
+internal class DeviceRegistrationServiceImpl: DeviceRegistrationService {
+
+    private let thisDeviceRepository : ThisDeviceRepository
+    private let devicesRepository    : DevicesRepository
+    private let valueStorage         : ValueStorage
+    private let client               : Client
+    private let devicesService       : DevicesServiceInternal
+    private var cancellables         = Set<AnyCancellable>()
     
-    public var deviceRegistrationService: DeviceRegistration { self }
+    public
+    private(set)
+    var deviceStatus: DeviceStatus = .init()
+    
+    init(valueStorage: ValueStorage, 
+         client: Client,
+         devicesRepository: DevicesRepository,
+         thisDeviceRepository: ThisDeviceRepository,
+         devicesService: DevicesServiceInternal) {
+        self.valueStorage = valueStorage
+        self.client = client
+        self.devicesRepository = devicesRepository
+        self.thisDeviceRepository = thisDeviceRepository
+        self.devicesService = devicesService
+        
+        self.deviceStatus.hasDevicePin   = valueStorage.readBool(forKey: .devicePinKey)   ?? false
+        self.deviceStatus.hasFingerprint = valueStorage.readBool(forKey: .fingerprintKey) ?? false
+        
+        self.deviceStatus
+            .$hasFingerprint
+            .sink { [weak self] newValue in
+                self?.valueStorage.store(value: newValue, forKey: .fingerprintKey)
+            }.store(in: &cancellables)
+        
+        self.deviceStatus.$hasDevicePin
+            .sink { [weak self] newValue in
+                self?.valueStorage.store(value: newValue, forKey: .devicePinKey)
+            }.store(in: &cancellables)
+        
+        self.deviceStatus.$hasFingerprint
+            .combineLatest(self.deviceStatus.$hasDevicePin)
+            .map { $0 || $1 }
+            .sink(receiveValue: { [weak self] result in
+                self?.deviceStatus.hasQuickLogin = result
+            })
+            .store(in: &cancellables)
+    }
     
     public func registerDevice(withPin pin: String, otpChannel: TotpDeliveryChannel? = nil, otpProvider: CallbackType.OtpProvider) async throws {
         do {
@@ -135,7 +152,7 @@ extension IdentityClient: IdentityClientDeviceRegistration {
             /* TODO: This request could have an OTP side-effect.
              Find a nice way to decide if it will and pass it to the OTP provider?
              */
-            let response = try await deviceRepository.initialize(authRequest: .pinInit(codeChallenge: verifierHash,
+            let response = try await devicesRepository.initialize(authRequest: .pinInit(codeChallenge: verifierHash,
                                                                                        deviceIds: deviceIds,
                                                                                        client: client))
             
@@ -149,7 +166,7 @@ extension IdentityClient: IdentityClientDeviceRegistration {
             // Should this throw something?
             if otpResult.isAborted { deviceStatus.hasDevicePin = false; return }
             
-            let registration = try await deviceRepository.complete(registrationRequest: .pin(code: response.challenge,
+            let registration = try await devicesRepository.complete(registrationRequest: .pin(code: response.challenge,
                                                                                              codeVerifier: verifier,
                                                                                              codeSignature: signedVerifier,
                                                                                              deviceIds: deviceIds,
@@ -180,7 +197,7 @@ extension IdentityClient: IdentityClientDeviceRegistration {
             /* TODO: This request could have an OTP side-effect.
              Find a nice way to decide if it will and pass it to the OTP provider?
              */
-            let response = try await deviceRepository.initialize(authRequest: .pinInit(codeChallenge: verifierHash,
+            let response = try await devicesRepository.initialize(authRequest: .pinInit(codeChallenge: verifierHash,
                                                                                        deviceIds: deviceIds,
                                                                                        client: client))
             
@@ -189,7 +206,7 @@ extension IdentityClient: IdentityClientDeviceRegistration {
             return { [weak self] otpResult in
                 guard let self = self else { return }
                 do {
-                    let registration = try await deviceRepository.complete(registrationRequest: .pin(code: response.challenge,
+                    let registration = try await devicesRepository.complete(registrationRequest: .pin(code: response.challenge,
                                                                                                      codeVerifier: verifier,
                                                                                                      codeSignature: signedVerifier,
                                                                                                      deviceIds: deviceIds,
@@ -225,7 +242,7 @@ extension IdentityClient: IdentityClientDeviceRegistration {
              Find a nice way to decide if it will and pass it to the OTP provider?
              */
             
-            let response = try await deviceRepository.initialize(authRequest: .biometrictInit(codeChallenge: verifierHash,
+            let response = try await devicesRepository.initialize(authRequest: .biometrictInit(codeChallenge: verifierHash,
                                                                                               deviceIds: deviceIds,
                                                                                               client: client))
             let signedVerifier = try CryptoUtils.sign(string: response.challenge, with: keys)
@@ -233,7 +250,7 @@ extension IdentityClient: IdentityClientDeviceRegistration {
             return { [weak self] otpResult in
                 guard let self = self else { return }
                 do {
-                    let registration = try await self.deviceRepository.complete(registrationRequest: .biometric(code: response.challenge,
+                    let registration = try await self.devicesRepository.complete(registrationRequest: .biometric(code: response.challenge,
                                                                                                                 codeVerifier: verifier,
                                                                                                                 codeSignature: signedVerifier,
                                                                                                                 deviceIds: deviceIds,
@@ -269,9 +286,9 @@ extension IdentityClient: IdentityClientDeviceRegistration {
              Find a nice way to decide if it will and pass it to the OTP provider?
              */
             
-            let response = try await deviceRepository.initialize(authRequest: .biometrictInit(codeChallenge: verifierHash,
-                                                                                              deviceIds: deviceIds,
-                                                                                              client: client))
+            let response = try await devicesRepository.initialize(authRequest: .biometrictInit(codeChallenge: verifierHash,
+                                                                                               deviceIds: deviceIds,
+                                                                                               client: client))
             let signedVerifier = try CryptoUtils.sign(string: response.challenge, with: keys)
             
             // TODO: pass the status of the otp need.
@@ -281,13 +298,13 @@ extension IdentityClient: IdentityClientDeviceRegistration {
             // TODO: Should this throw something?
             if otpResult.isAborted { deviceStatus.hasFingerprint = false; return }
             
-            let registration = try await deviceRepository.complete(registrationRequest: .biometric(code: response.challenge,
-                                                                                                   codeVerifier: verifier,
-                                                                                                   codeSignature: signedVerifier,
-                                                                                                   deviceIds: deviceIds,
-                                                                                                   deviceInfo: deviceInfo,
-                                                                                                   publicPem: devicePem,
-                                                                                                   otp: otpResult.otpValue))
+            let registration = try await devicesRepository.complete(registrationRequest: .biometric(code: response.challenge,
+                                                                                                    codeVerifier: verifier,
+                                                                                                    codeSignature: signedVerifier,
+                                                                                                    deviceIds: deviceIds,
+                                                                                                    deviceInfo: deviceInfo,
+                                                                                                    publicPem: devicePem,
+                                                                                                    otp: otpResult.otpValue))
             
             thisDeviceRepository.update(registrationId: registration.registrationId)
         } catch {
@@ -310,12 +327,12 @@ extension IdentityClient: IdentityClientDeviceRegistration {
     public func enableDeviceTrust(deviceSelection: CallbackType.DeviceSelection) async throws {
         let ids = thisDeviceRepository.ids
         
-        if devicesInfo.userDevices == nil {
-            try await deviceManagementService.refreshDevices()
+        if devicesService.devicesInfo.userDevices == nil {
+            try await devicesService.refreshDevices()
         }
         
         let maxTrustedCount = 1 // TODO: Get from API?
-        let devices = (devicesInfo.userDevices ?? []).filter {
+        let devices = (devicesService.devicesInfo.userDevices ?? []).filter {
             $0.deviceId != ids.device
         }
             
@@ -336,18 +353,18 @@ extension IdentityClient: IdentityClientDeviceRegistration {
             return nil
         }()
         
-        try await deviceRepository.trust(deviceId: ids.device, bySwappingWith: swapDeviceId)
+        try await devicesRepository.trust(deviceId: ids.device, bySwappingWith: swapDeviceId)
         
-        try await updateDeviceWith(deviceId: ids.device)
+        try await devicesService.updateDeviceWith(deviceId: ids.device)
         
-        if let swapDeviceId { try await updateDeviceWith(deviceId: swapDeviceId) }
+        if let swapDeviceId { try await devicesService.updateDeviceWith(deviceId: swapDeviceId) }
     }
     
     public func removeDeviceTrust() async throws {
         let deviceId = thisDeviceRepository.ids.device
         
-        try await deviceRepository.unTrust(deviceId: deviceId)
-        try await updateDeviceWith(deviceId: deviceId)
+        try await devicesRepository.unTrust(deviceId: deviceId)
+        try await devicesService.updateDeviceWith(deviceId: deviceId)
     }
     
 }

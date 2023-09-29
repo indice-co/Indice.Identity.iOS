@@ -11,17 +11,17 @@ import IndiceNetworkClient
 
 class AuthRepositoryImpl: AuthRepository {
     
-    private let authorization: Authorization
+    private let configuration: IdentityConfig
     private let networkClient: NetworkClient
     
-    init(authorization: Authorization, networkClient: NetworkClient) {
-        self.authorization = authorization
+    init(configuration: IdentityConfig, networkClient: NetworkClient) {
+        self.configuration = configuration
         self.networkClient = networkClient
     }
     
     func authorize(grant: OAuth2Grant) async throws -> TokenResponse {
         let request = URLRequest.builder()
-            .post(path: authorization.tokenEndpoint)
+            .post(path: configuration.tokenEndpoint)
             .bodyFormUtf8(params: grant.params)
             .add(header: .accept(type: .json))
             .build()
@@ -34,7 +34,7 @@ class AuthRepositoryImpl: AuthRepository {
             .compactMapValues { $0 }
         
         let request = URLRequest.builder()
-            .post(path: authorization.revokeEndpoint)
+            .post(path: configuration.revokeEndpoint)
             .bodyFormUtf8(params: body)
             .add(header: .accept(type: .json))
             .add(header: .authorisation(auth: auth))
