@@ -12,7 +12,8 @@ To install Indice.Identity.iOS in your project add the clone url to your package
 
 ## Support for Indice.AspNet
 
-This package version has been tested with v7.3.28.   
+This package version has been tested with v7.3.28.
 
 
 ## Usage
+
