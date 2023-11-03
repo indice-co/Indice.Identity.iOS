@@ -117,18 +117,11 @@ internal class IdentityClientImpl: IdentityClient {
     private(set) lazy
     var devicesService: DevicesService = {
         DevicesServiceImpl(thisDeviceRepository: repositories.thisDeviceRepository,
-                           devicesRepository: repositories.devicesRepository)
+                           devicesRepository: repositories.devicesRepository,
+                           valueStorage: valueStorage,
+                           client: client)
     }()
     
-    public
-    private(set) lazy
-    var deviceRegistrationService: DeviceRegistrationService = {
-        DeviceRegistrationServiceImpl(valueStorage: valueStorage,
-                                      client: client,
-                                      devicesRepository: repositories.devicesRepository,
-                                      thisDeviceRepository: repositories.thisDeviceRepository,
-                                      devicesService: devicesService as! DevicesServiceInternal)
-    }()
     
     public
     private(set)

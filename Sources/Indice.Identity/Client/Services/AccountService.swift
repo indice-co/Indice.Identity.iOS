@@ -20,6 +20,13 @@ public protocol AccountService: AnyObject {
     
     /** Update the user's current password */
     func update(password: UpdatePasswordRequest) async throws
+    
+    
+    /** Initiate the forgot password flow */
+    func forgotPasswordInitialize(email: String, returnUrl: String) async throws
+    
+    /** Confirm forgot password and set a new one */
+    func forgotPasswordConfirmation(token: String, email: String, password: String, passwordConfirmation: String, returnUrl: String) async throws
 }
 
 
@@ -71,6 +78,20 @@ internal class AccountServiceImpl : AccountService {
     public func update(password passwordRequest: UpdatePasswordRequest) async throws {
         try await accountRepository.update(password: passwordRequest)
     }
-        
+    
+    
+    
+    public func forgotPasswordInitialize(email: String, returnUrl: String) async throws {
+        try await accountRepository.forgot(password: .init(email: email, returnUrl: returnUrl))
+    }
+    
+    public func forgotPasswordConfirmation(token: String, email: String, password: String, passwordConfirmation: String, returnUrl: String) async throws {
+        try await accountRepository.forgot(passwordConfirmation: .init(email: email,
+                                                                       newPassword: password,
+                                                                       newPasswordConfirmation: passwordConfirmation,
+                                                                       returnUrl: returnUrl,
+                                                                       token: token))
+    }
+   
 }
 

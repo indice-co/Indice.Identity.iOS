@@ -11,7 +11,6 @@ import Foundation
 /** AuthorizationEndpoint describes basic properties regarding an Identity Authorization Server.   */
 public struct IdentityConfig {
 
-    
     /** Endpoints for trusting device (biometrics/4pin) */
     public struct DeviceTrustEndpoint {
         public let initializeEndpoint : String
@@ -53,6 +52,21 @@ public struct IdentityConfig {
         self.authCodeResponseType = authCodeResponseType
         self.authCodeResponseMode = authCodeResponseMode
         self.deviceRegistration = deviceRegistration
+    }
+    
+    public init(baseUrl: String) {
+        self.baseUrl = baseUrl
+        self.authorizationEndpoint = "\(baseUrl)/connect/authorize"
+        self.tokenEndpoint         = "\(baseUrl)/connect/token"
+        self.revokeEndpoint        = "\(baseUrl)/connect/revocation"
+        self.logoutEndpoint        = "\(baseUrl)/connect/endsession"
+                
+        self.authCodeResponseType  = "code"
+        self.authCodeResponseMode  = "query"
+        
+        self.deviceRegistration = .init(initializeEndpoint : "\(baseUrl)/my/devices/register/init",
+                                        completionEndpoint : "\(baseUrl)/my/devices/register/complete",
+                                        authorizeEndpoint  : "\(baseUrl)/my/devices/connect/authorize")
     }
     
 }

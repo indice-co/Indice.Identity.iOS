@@ -23,7 +23,6 @@ public protocol IdentityClient: AnyObject {
     var accountService            : AccountService            { get }
     var devicesService            : DevicesService            { get }
     var userRegistrationService   : UserRegistrationService   { get }
-    var deviceRegistrationService : DeviceRegistrationService { get }
 }
 
 
@@ -31,6 +30,7 @@ public protocol IdentityClient: AnyObject {
  Create an instance of the IdentityClient.
  */
 public class IdentityClientFactory {
+    
     @available(*, unavailable)
     private init() {}
     
@@ -51,8 +51,8 @@ public class IdentityClientFactory {
         client: Client,
         configuration: IdentityConfig,
         currentDeviceInfoProvider: CurrentDeviceInfoProvider,
-        valueStorage: ValueStorage = UserDefaults.standard,
-        tokenStorage: TokenStorage = .ephemeral,
+        valueStorage: ValueStorage,
+        tokenStorage: TokenStorage,
         networkClientBuilder: ((IdentityClient) -> NetworkClient)? = nil) -> IdentityClient {
             IdentityClientImpl(
                 client: client,
@@ -62,6 +62,31 @@ public class IdentityClientFactory {
                 tokenStorage: tokenStorage,
                 networkClientBuilder: networkClientBuilder)
     }
+    
+    /**
+     Create an instance of the IdentityClient.
+     
+     - Parameter baseUrl: Initializes the ``IdentityClient`` with a configuration (``IdentityConfig``) that uses default endpoints.
+     - Parameter client: The Client info as set in the `IdentityServer`
+     - Parameter currentDeviceInfoProvider: Provide in implementation of the ``CurrentDeviceInfoProvider``
+     - Parameter networkClientBuilder: (optional but suggested) Provide a builder for a ``NetworkClient``. Mainly used to add interceptors that use the accessToken.
+                                   By default the builder adds a ``AuthorizationHeaderInterceptor`` and ``AuthorizingInterceptor`` that add any existing
+                                   access tokens from the TokenStorage as Authorization header and try requesting a valid access token when a 401 error code is found, respectively.
+     */
+    public static func create(
+        baseUrl: String,
+        client: Client,
+        currentDeviceInfoProvider: CurrentDeviceInfoProvider,
+        networkClientBuilder: ((IdentityClient) -> NetworkClient)? = nil) -> IdentityClient {
+        IdentityClientImpl(
+            client: client,
+            configuration: .init(baseUrl: baseUrl),
+            currentDeviceInfoProvider: currentDeviceInfoProvider,
+            valueStorage: UserDefaults.standard,
+            tokenStorage: .ephemeral,
+            networkClientBuilder: networkClientBuilder)
+    }
+    
 }
 
 

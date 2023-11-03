@@ -40,12 +40,6 @@ public protocol AuthorizationService: AnyObject {
     
     /** Generate the url used to end a user's session  */
     func endSessionUrl() throws -> URL
-    
-    /** Initiate the forgot password flow */
-    func forgotPasswordInitialize(email: String, returnUrl: String) async throws
-    
-    /** Confirm forgot password and set a new one */
-    func forgotPasswordConfirmation(token: String, email: String, password: String, passwordConfirmation: String, returnUrl: String) async throws
 }
 
 
@@ -154,18 +148,6 @@ internal class AuthorizationServiceImpl: AuthorizationService {
             try await authRepository.revoke(token: refreshToken,
                                             withBasicAuth: client.basicAuth)
         }
-    }
-    
-    public func forgotPasswordInitialize(email: String, returnUrl: String) async throws {
-        try await accountRepository.forgot(password: .init(email: email, returnUrl: returnUrl))
-    }
-    
-    public func forgotPasswordConfirmation(token: String, email: String, password: String, passwordConfirmation: String, returnUrl: String) async throws {
-        try await accountRepository.forgot(passwordConfirmation: .init(email: email,
-                                                                       newPassword: password,
-                                                                       newPasswordConfirmation: passwordConfirmation,
-                                                                       returnUrl: returnUrl,
-                                                                       token: token))
     }
       
     /** Create a prepared URL pointing to the authentication's proper endpoint in order to initiate an "Authorization Code" flow.

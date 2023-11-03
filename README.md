@@ -10,10 +10,6 @@ Swift Library Identity SDK.
 To install Indice.Identity.iOS in your project add the clone url to your package manager in xcode
 
 
-## Support for Indice.AspNet
+## Support for Indice Identity
 
 This package version has been tested with v7.3.28.
-
-
-## Usage
-

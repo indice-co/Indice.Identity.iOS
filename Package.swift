@@ -13,7 +13,7 @@ let package = Package(
             targets: ["Indice.Identity"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/indice-co/Indice.Swift.Networking", .upToNextMajor(from: "1.0.0"))
+        .package(url: "https://github.com/indice-co/Indice.Swift.Networking", .upToNextMajor(from: "1.2.3"))
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
