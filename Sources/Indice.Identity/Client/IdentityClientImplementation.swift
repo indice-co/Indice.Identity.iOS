@@ -12,18 +12,18 @@ private class Repositories {
     
     private let repositoryFactory: RepositoryFactory.Type
     private let configuration: IdentityConfig
-    private let networkClient: NetworkClient
+    private let requestProcessor: RequestProcessor
     private let valueStorage: ValueStorage
     private let currentDeviceInfoProvider: CurrentDeviceInfoProvider
 
     init(repositoryFactory: RepositoryFactory.Type, 
          configuration: IdentityConfig,
-         networkClient: NetworkClient,
+         requestProcessor: RequestProcessor,
          valueStorage: ValueStorage,
          currentDeviceInfoProvider: CurrentDeviceInfoProvider) {
         self.repositoryFactory = repositoryFactory
         self.configuration = configuration
-        self.networkClient = networkClient
+        self.requestProcessor = requestProcessor
         self.valueStorage = valueStorage
         self.currentDeviceInfoProvider = currentDeviceInfoProvider
     }
@@ -31,25 +31,25 @@ private class Repositories {
     internal lazy
     var authRepository: AuthRepository = {
         repositoryFactory.authRepository(configuration: configuration,
-                                         networkClient: networkClient)
+                                         requestProcessor: requestProcessor)
     }()
     
     internal lazy
     var accountRepository: MyAccountRepository = {
         repositoryFactory.myAccountRepository(configuration: configuration,
-                                              networkClient: networkClient)
+                                              requestProcessor: requestProcessor)
     }()
     
     internal lazy
     var devicesRepository: DevicesRepository = {
         repositoryFactory.devicesRepository(configuration: configuration,
-                                            networkClient: networkClient)
+                                            requestProcessor: requestProcessor)
     }()
     
     internal lazy
     var userRepository: UserInfoRepository = {
         repositoryFactory.userRepository(configuration: configuration,
-                                         networkClient: networkClient)
+                                         requestProcessor: requestProcessor)
     }()
     
     internal lazy
@@ -66,6 +66,7 @@ internal class IdentityClientImpl: IdentityClient {
     internal let tokenStorage              : TokenStorage
     private  let valueStorage              : ValueStorage
     private  let currentDeviceInfoProvider : CurrentDeviceInfoProvider
+    private  let options                   : IdentityClient.Options
     
     public var tokens: TokenStorageAccessor { get { tokenStorage } }
 
@@ -81,7 +82,7 @@ internal class IdentityClientImpl: IdentityClient {
     var repositories: Repositories = {
        Repositories(repositoryFactory: DefaultRepositoryFactory.self,
                     configuration: configuration,
-                    networkClient: networkClient,
+                    requestProcessor: networkClient,
                     valueStorage: valueStorage,
                     currentDeviceInfoProvider: currentDeviceInfoProvider)
     }()
@@ -116,7 +117,8 @@ internal class IdentityClientImpl: IdentityClient {
     public
     private(set) lazy
     var devicesService: DevicesService = {
-        DevicesServiceImpl(thisDeviceRepository: repositories.thisDeviceRepository,
+        DevicesServiceImpl(identityOptions: options,
+                           thisDeviceRepository: repositories.thisDeviceRepository,
                            devicesRepository: repositories.devicesRepository,
                            valueStorage: valueStorage,
                            client: client)
@@ -133,6 +135,7 @@ internal class IdentityClientImpl: IdentityClient {
     // MARK: - Init
     public init(client: Client,
                 configuration: IdentityConfig,
+                options: IdentityClient.Options = .init(maxTrustedDevicesCount: 1),
                 currentDeviceInfoProvider: CurrentDeviceInfoProvider,
                 valueStorage: ValueStorage = UserDefaults.standard,
                 tokenStorage: TokenStorage = .ephemeral,
@@ -142,6 +145,7 @@ internal class IdentityClientImpl: IdentityClient {
         self.currentDeviceInfoProvider = currentDeviceInfoProvider
         self.valueStorage = valueStorage
         self.tokenStorage = tokenStorage
+        self.options = options
         self.createNetworkClient = networkClientBuilder ?? { client in
             NetworkClient(interceptors: [AuthorizationHeaderInterceptor(tokenAccessor: client.tokens),
                                          AuthorizingInterceptor(authServiceProvider: { [weak client] in client?.authorizationService })])

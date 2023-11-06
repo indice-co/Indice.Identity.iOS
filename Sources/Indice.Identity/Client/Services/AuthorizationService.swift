@@ -34,6 +34,8 @@ public protocol AuthorizationService: AnyObject {
      */
     func revokeTokens() async throws
     
+    /** Generate the url used to initiate a authorization\_code flow  */
+    func authorizationUrl(withPkce pkce: PKCE) throws -> URL
     
     /** Generate the url used to initiate a authorization\_code flow  */
     func authorizationUrl(withPkce pkce: PKCE, andPrompt prompt: String) throws -> URL
@@ -153,7 +155,14 @@ internal class AuthorizationServiceImpl: AuthorizationService {
     /** Create a prepared URL pointing to the authentication's proper endpoint in order to initiate an "Authorization Code" flow.
         acr\_values, and ui\_locales are omitted as they can me appended by the consumer manually.
      */
-    func authorizationUrl(withPkce pkce: PKCE, andPrompt prompt: String = "login") throws -> URL {
+    func authorizationUrl(withPkce pkce: PKCE) throws -> URL {
+        try authorizationUrl(withPkce: pkce, andPrompt: "login")
+    }
+    
+    /** Create a prepared URL pointing to the authentication's proper endpoint in order to initiate an "Authorization Code" flow.
+        acr\_values, and ui\_locales are omitted as they can me appended by the consumer manually.
+     */
+    func authorizationUrl(withPkce pkce: PKCE, andPrompt prompt: String) throws -> URL {
         guard var url = URL(string: configuration.authorizationEndpoint) else {
             throw IdentityClient.Errors.AuthUrl
         }

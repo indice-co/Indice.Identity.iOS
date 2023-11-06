@@ -11,11 +11,11 @@ import IndiceNetworkClient
 public class DevicesRepositoryImpl: DevicesRepository {
 
     let configuration : IdentityConfig
-    let networkClient : NetworkClient
+    let requestProcessor : RequestProcessor
     
-    public init(configuration: IdentityConfig, networkClient: NetworkClient) {
+    public init(configuration: IdentityConfig, requestProcessor: RequestProcessor) {
         self.configuration = configuration
-        self.networkClient = networkClient
+        self.requestProcessor = requestProcessor
     }
     
 }
@@ -32,7 +32,7 @@ public extension DevicesRepositoryImpl {
             .add(header: .accept(type: .json))
             .build()
         
-        return try await networkClient.fetch(request: request)
+        return try await requestProcessor.process(request: request)
     }
     
     
@@ -43,7 +43,7 @@ public extension DevicesRepositoryImpl {
             .add(header: .accept(type: .json))
             .build()
         
-        return try await networkClient.fetch(request: request)
+        return try await requestProcessor.process(request: request)
     }
     
     
@@ -54,7 +54,7 @@ public extension DevicesRepositoryImpl {
             .add(header: .accept(type: .json))
             .build()
         
-        return try await networkClient.fetch(request: request)
+        return try await requestProcessor.process(request: request)
     }
 }
 
@@ -69,7 +69,7 @@ public extension DevicesRepositoryImpl {
             .add(header: .accept(type: .json))
             .build()
         
-        return try await networkClient.fetch(request: request)
+        return try await requestProcessor.process(request: request)
     }
     
     func device(byId deviceId: String) async throws -> DeviceInfo {
@@ -78,7 +78,7 @@ public extension DevicesRepositoryImpl {
             .add(header: .accept(type: .json))
             .build()
         
-        return try await networkClient.fetch(request: request)
+        return try await requestProcessor.process(request: request)
     }
     
     func create(device data: CreateDeviceRequest) async throws {
@@ -88,7 +88,7 @@ public extension DevicesRepositoryImpl {
             .add(header: .accept(type: .json))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
     func update(deviceId: String, with data: UpdateDeviceRequest) async throws {
@@ -98,7 +98,7 @@ public extension DevicesRepositoryImpl {
             .add(header: .accept(type: .json))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
     func delete(deviceId: String) async throws {
@@ -107,7 +107,7 @@ public extension DevicesRepositoryImpl {
             .add(header: .accept(type: .json))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
 }
 
@@ -127,7 +127,7 @@ public extension DevicesRepositoryImpl {
             .add(header: .accept(type: .json))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
     func unTrust(deviceId: String) async throws {
@@ -137,7 +137,7 @@ public extension DevicesRepositoryImpl {
             .add(header: .accept(type: .json))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
 }

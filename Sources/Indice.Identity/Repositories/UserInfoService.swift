@@ -11,11 +11,11 @@ import IndiceNetworkClient
 class UserInfoRepositoryImpl: UserInfoRepository {
     
     private let configuration: IdentityConfig
-    private let networkClient: NetworkClient
+    private let requestProcessor: RequestProcessor
     
-    init(configuration: IdentityConfig, networkClient: NetworkClient) {
+    init(configuration: IdentityConfig, requestProcessor: RequestProcessor) {
         self.configuration = configuration
-        self.networkClient = networkClient
+        self.requestProcessor = requestProcessor
     }
     
     func userInfo() async throws -> UserInfo {
@@ -24,7 +24,7 @@ class UserInfoRepositoryImpl: UserInfoRepository {
             .add(header: .accept(type: .json))
             .build()
         
-        return try await networkClient.fetch(request: request)
+        return try await requestProcessor.process(request: request)
     }
     
 }

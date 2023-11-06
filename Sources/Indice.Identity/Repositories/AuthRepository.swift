@@ -12,11 +12,11 @@ import IndiceNetworkClient
 class AuthRepositoryImpl: AuthRepository {
     
     private let configuration: IdentityConfig
-    private let networkClient: NetworkClient
+    private let requestProcessor: RequestProcessor
     
-    init(configuration: IdentityConfig, networkClient: NetworkClient) {
+    init(configuration: IdentityConfig, requestProcessor: RequestProcessor) {
         self.configuration = configuration
-        self.networkClient = networkClient
+        self.requestProcessor = requestProcessor
     }
     
     func authorize(grant: OAuth2Grant) async throws -> TokenResponse {
@@ -26,7 +26,7 @@ class AuthRepositoryImpl: AuthRepository {
             .add(header: .accept(type: .json))
             .build()
         
-        return try await networkClient.fetch(request: request)
+        return try await requestProcessor.process(request: request)
     }
 
     func revoke(token: TokenType, withBasicAuth auth: String) async throws {
@@ -40,7 +40,7 @@ class AuthRepositoryImpl: AuthRepository {
             .add(header: .authorisation(auth: auth))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
 }

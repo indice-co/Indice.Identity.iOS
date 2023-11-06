@@ -60,6 +60,23 @@ public protocol DevicesService: AnyObject {
     
     /** Delete a devices from the user's registered devices list. */
     func delete(deviceId: String) async throws
+
+    
+    /**
+     Register or update a device, to be able to perform a **device\_authentication** grant with **pin** mode
+     This method returns a **lambda** that, provided with on otp, completes the device pin registration.
+     ```
+     
+     let pin: String = makePin()
+     let continuation = try await registerDevice(withPin: pin)
+     
+     // If success show otp input
+     try await continuation(otpResult)
+     
+     ```
+     It is not necessary to call the continuation with an OtpResult.aborted result but it is recommended.
+     */
+    func registerDevice(withPin pin: String) async throws -> (CallbackType.OtpResult) async throws -> ()
     
     /**
      Register or update a device, to be able to perform a **device\_authentication** grant with **pin** mode
@@ -76,7 +93,22 @@ public protocol DevicesService: AnyObject {
      It is not necessary to call the continuation with an OtpResult.aborted result but it is recommended.
      */
     func registerDevice(withPin pin: String, otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> ()
+
     
+    /**
+     Register or update a device, to be able to perform a **device\_authentication** grant with **fingerprint** mode
+     This method returns a **lambda** that, provided with on otp, completes the device fingerprint registration.
+     ```
+     
+     let continuation = try await registerDeviceFingerprint()
+     // If success show otp input
+     try await continuation(otpResult)
+     
+     ```
+     It is not necessary to call the continuation with an OtpResult.aborted result but it is recommended.
+     */
+    func registerDeviceFingerprint() async throws -> (CallbackType.OtpResult) async throws -> ()
+
     
     /**
      Register or update a device, to be able to perform a **device\_authentication** grant with **fingerprint** mode
@@ -113,6 +145,7 @@ internal class DevicesServiceImpl: DevicesService {
     
     public let quickLoginStatus: QuickLoginStatus = .init()
     
+    private let identityOptions      : IdentityClientOptions
     private let thisDeviceRepository : ThisDeviceRepository
     private let devicesRepository    : DevicesRepository
     private let valueStorage         : ValueStorage
@@ -120,11 +153,13 @@ internal class DevicesServiceImpl: DevicesService {
 
     private var cancellables         = Set<AnyCancellable>()
     
-    init(thisDeviceRepository: ThisDeviceRepository,
+    init(identityOptions: IdentityClientOptions,
+         thisDeviceRepository: ThisDeviceRepository,
          devicesRepository: DevicesRepository,
          valueStorage: ValueStorage,
          client: Client) {
         
+        self.identityOptions = identityOptions
         self.thisDeviceRepository = thisDeviceRepository
         self.devicesRepository = devicesRepository
         self.valueStorage = valueStorage
@@ -214,6 +249,10 @@ internal class DevicesServiceImpl: DevicesService {
 
 extension DevicesServiceImpl {
     
+    public func registerDevice(withPin pin: String) async throws -> (CallbackType.OtpResult) async throws -> () {
+        try await registerDevice(withPin: pin, otpChannel: nil)
+    }
+    
     public func registerDevice(withPin pin: String, otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> () {
         do {
             _ = CryptoUtils.deleteKeyPair(locked: false, tagged: .devicePin)
@@ -224,7 +263,7 @@ extension DevicesServiceImpl {
             let deviceIds    = thisDeviceRepository.ids
             let deviceInfo   = thisDeviceRepository.info
             let devicePin    = try CryptoUtils.prepare(pin: pin, withDeviceId: deviceIds.device, and: keys)
-            /* TODO: This request could have an OTP side-effect.
+            /* TODO: This request generally has an OTP side-effect, except if the user has the otp_authenticated=true claim.
              Find a nice way to decide if it will and pass it to the OTP provider?
              */
             let response = try await devicesRepository.initialize(authRequest: .pinInit(codeChallenge: verifierHash,
@@ -258,7 +297,11 @@ extension DevicesServiceImpl {
     }
     
     
-    public func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel? = nil) async throws -> (CallbackType.OtpResult) async throws -> () {
+    public func registerDeviceFingerprint() async throws -> (CallbackType.OtpResult) async throws -> () {
+        try await registerDeviceFingerprint(otpChannel: nil)
+    }
+    
+    public func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> () {
         do {
             _ = CryptoUtils.deleteKeyPair(locked: true, tagged: .fingerprint)
             let keys = try CryptoUtils.createKeyPair(locked: true, tagged: .fingerprint)
@@ -320,7 +363,6 @@ extension DevicesServiceImpl {
             try await refreshDevices()
         }
         
-        let maxTrustedCount = 1 // TODO: Get from API?
         let devices = (devicesInfo.userDevices ?? []).filter {
             $0.deviceId != ids.device
         }
@@ -330,7 +372,7 @@ extension DevicesServiceImpl {
         }.count
         
         let swapDeviceId: String? = await {
-            if currentTrustedCount >= maxTrustedCount {
+            if currentTrustedCount >= identityOptions.maxTrustedDevicesCount {
                 if case .swap(let deviceInfo) = await deviceSelection(devices) {
                     return deviceInfo.deviceId
                 } else {

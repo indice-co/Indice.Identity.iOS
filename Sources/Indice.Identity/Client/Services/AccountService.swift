@@ -11,8 +11,10 @@ import Foundation
 /** Service responsible for updating the users account */
 public protocol AccountService: AnyObject {
     /** Update  the user's current phone number */
+    @available(*, deprecated, renamed: "update(phone:otpChannel:)", message: "The async otpProvider is tricky too handle. Use the update(phone: String, otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> () instead, to get an otp completion handler.")
     func update(phone: String, otpChannel: TotpDeliveryChannel?, otpProvider: CallbackType.OtpProvider) async throws
     
+    /** Update  the user's current phone number */
     func update(phone: String, otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> ()
     
     /** Update  the user's current email */

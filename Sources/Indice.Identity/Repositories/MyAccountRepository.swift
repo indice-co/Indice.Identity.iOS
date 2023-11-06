@@ -12,11 +12,11 @@ import IndiceNetworkClient
 public class MyAccountRepositoryImpl : MyAccountRepository {
     
     private let configuration: IdentityConfig
-    private let networkClient: NetworkClient
+    private let requestProcessor: RequestProcessor
     
-    public init(configuration: IdentityConfig, networkClient: NetworkClient) {
+    public init(configuration: IdentityConfig, requestProcessor: RequestProcessor) {
         self.configuration = configuration
-        self.networkClient = networkClient
+        self.requestProcessor = requestProcessor
     }
     
     
@@ -27,7 +27,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
             .add(header: .accept(type: .json))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
     public func verify(password passwordRequest: ValidatePasswordRequest) async throws -> CredentialsValidationInfo {
@@ -36,7 +36,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
             .bodyJson(of: passwordRequest)
             .build()
         
-        return try await networkClient.fetch(request: request)
+        return try await requestProcessor.process(request: request)
     }
     
     public func verify(username usernameRequest: ValidateUsernameRequest) async throws -> UsernameStateInfo {
@@ -47,7 +47,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
         
         let result: UsernameStateInfo = try await {
             do {
-                try await networkClient.fetch(request: request)
+                try await requestProcessor.process(request: request)
                 return UsernameStateInfo(result: .unavailable)
             } catch {
                 guard let code = (error as? APIError)?.statusCode else {
@@ -71,7 +71,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
             .bodyJson(of: forgotPasswordRequest)
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
     public func forgot(passwordConfirmation confirmationRequest: ForgotPasswordConfirmation) async throws {
@@ -80,7 +80,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
             .bodyJson(of: confirmationRequest)
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
     
@@ -91,7 +91,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
             .add(header: .accept(type: .json))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
     public func update(email emailRequest: UpdateEmailRequest) async throws {
@@ -101,7 +101,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
             .add(header: .accept(type: .json))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
     public func update(phone phoneRequest: UpdatePhoneRequest) async throws {
@@ -111,7 +111,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
             .add(header: .accept(type: .json))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
     public func verifyEmail(with otpRequest: OtpTokenRequest) async throws {
@@ -121,7 +121,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
             .add(header: .accept(type: .json))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
     public func verifyPhone(with otpRequest: OtpTokenRequest) async throws {
@@ -131,7 +131,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
             .add(header: .accept(type: .json))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
 }

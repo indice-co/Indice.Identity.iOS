@@ -13,7 +13,8 @@ import IndiceNetworkClient
  One instance should be created.
  */
 public protocol IdentityClient: AnyObject {
-    typealias Errors = IdentityClientErrors
+    typealias Errors  = IdentityClientErrors
+    typealias Options = IdentityClientOptions
     
     var tokens: TokenStorageAccessor { get }
     var networkClient: NetworkClient { get }
@@ -26,67 +27,8 @@ public protocol IdentityClient: AnyObject {
 }
 
 
-/**
- Create an instance of the IdentityClient.
- */
-public class IdentityClientFactory {
-    
-    @available(*, unavailable)
-    private init() {}
-    
-    
-    /**
-     Create an instance of the IdentityClient.
-     
-     - Parameter client: The Client info as set in the `IdentityServer`
-     - Parameter configuration: Properties regarding the `IdentityServer` installation
-     - Parameter currentDeviceInfoProvider: Provide in implementation of the ``CurrentDeviceInfoProvider``
-     - Parameter valueStorage: (optional) Provide a custom implementation of a persistent storage. Default is `UserDefaults.standard`.
-     - Parameter tokenStorage: (optional) Provide a custom TokenStorage implementation. Default is `TokenStorage.ephemeral`.
-     - Parameter networkClientBuilder: (optional but suggested) Provide a builder for a ``NetworkClient``. Mainly used to add interceptors that use the accessToken.
-                                   By default the builder adds a ``AuthorizationHeaderInterceptor`` and ``AuthorizingInterceptor`` that add any existing
-                                   access tokens from the TokenStorage as Authorization header and try requesting a valid access token when a 401 error code is found, respectively.
-     */
-    public static func create(
-        client: Client,
-        configuration: IdentityConfig,
-        currentDeviceInfoProvider: CurrentDeviceInfoProvider,
-        valueStorage: ValueStorage,
-        tokenStorage: TokenStorage,
-        networkClientBuilder: ((IdentityClient) -> NetworkClient)? = nil) -> IdentityClient {
-            IdentityClientImpl(
-                client: client,
-                configuration: configuration,
-                currentDeviceInfoProvider: currentDeviceInfoProvider,
-                valueStorage: valueStorage,
-                tokenStorage: tokenStorage,
-                networkClientBuilder: networkClientBuilder)
-    }
-    
-    /**
-     Create an instance of the IdentityClient.
-     
-     - Parameter baseUrl: Initializes the ``IdentityClient`` with a configuration (``IdentityConfig``) that uses default endpoints.
-     - Parameter client: The Client info as set in the `IdentityServer`
-     - Parameter currentDeviceInfoProvider: Provide in implementation of the ``CurrentDeviceInfoProvider``
-     - Parameter networkClientBuilder: (optional but suggested) Provide a builder for a ``NetworkClient``. Mainly used to add interceptors that use the accessToken.
-                                   By default the builder adds a ``AuthorizationHeaderInterceptor`` and ``AuthorizingInterceptor`` that add any existing
-                                   access tokens from the TokenStorage as Authorization header and try requesting a valid access token when a 401 error code is found, respectively.
-     */
-    public static func create(
-        baseUrl: String,
-        client: Client,
-        currentDeviceInfoProvider: CurrentDeviceInfoProvider,
-        networkClientBuilder: ((IdentityClient) -> NetworkClient)? = nil) -> IdentityClient {
-        IdentityClientImpl(
-            client: client,
-            configuration: .init(baseUrl: baseUrl),
-            currentDeviceInfoProvider: currentDeviceInfoProvider,
-            valueStorage: UserDefaults.standard,
-            tokenStorage: .ephemeral,
-            networkClientBuilder: networkClientBuilder)
-    }
-    
+public struct IdentityClientOptions {
+    var maxTrustedDevicesCount: Int = 1
 }
 
 

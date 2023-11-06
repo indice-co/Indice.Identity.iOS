@@ -9,29 +9,29 @@ import Foundation
 import IndiceNetworkClient
 
 public protocol RepositoryFactory {
-    static func authRepository      (configuration: IdentityConfig, networkClient: NetworkClient) -> AuthRepository
-    static func userRepository      (configuration: IdentityConfig, networkClient: NetworkClient) -> UserInfoRepository
-    static func myAccountRepository (configuration: IdentityConfig, networkClient: NetworkClient) -> MyAccountRepository
-    static func devicesRepository   (configuration: IdentityConfig, networkClient: NetworkClient) -> DevicesRepository
+    static func authRepository      (configuration: IdentityConfig, requestProcessor: RequestProcessor) -> AuthRepository
+    static func userRepository      (configuration: IdentityConfig, requestProcessor: RequestProcessor) -> UserInfoRepository
+    static func myAccountRepository (configuration: IdentityConfig, requestProcessor: RequestProcessor) -> MyAccountRepository
+    static func devicesRepository   (configuration: IdentityConfig, requestProcessor: RequestProcessor) -> DevicesRepository
     static func thisDeviceRepository(storage: ValueStorage, currentDeviceInfoProvider: CurrentDeviceInfoProvider) -> ThisDeviceRepository
 }
 
 internal class DefaultRepositoryFactory: RepositoryFactory {
     
-    public static func authRepository(configuration: IdentityConfig, networkClient: NetworkClient) -> AuthRepository {
-        AuthRepositoryImpl(configuration: configuration, networkClient: networkClient)
+    public static func authRepository(configuration: IdentityConfig, requestProcessor: RequestProcessor) -> AuthRepository {
+        AuthRepositoryImpl(configuration: configuration, requestProcessor: requestProcessor)
     }
     
-    public static func userRepository(configuration: IdentityConfig, networkClient: NetworkClient) -> UserInfoRepository {
-        UserInfoRepositoryImpl(configuration: configuration, networkClient: networkClient)
+    public static func userRepository(configuration: IdentityConfig, requestProcessor: RequestProcessor) -> UserInfoRepository {
+        UserInfoRepositoryImpl(configuration: configuration, requestProcessor: requestProcessor)
     }
     
-    public static func devicesRepository(configuration: IdentityConfig, networkClient: NetworkClient) -> DevicesRepository {
-        DevicesRepositoryImpl(configuration: configuration, networkClient: networkClient)
+    public static func devicesRepository(configuration: IdentityConfig, requestProcessor: RequestProcessor) -> DevicesRepository {
+        DevicesRepositoryImpl(configuration: configuration, requestProcessor: requestProcessor)
     }
     
-    public static func myAccountRepository(configuration: IdentityConfig, networkClient: NetworkClient) -> MyAccountRepository {
-        MyAccountRepositoryImpl(configuration: configuration, networkClient: networkClient)
+    public static func myAccountRepository(configuration: IdentityConfig, requestProcessor: RequestProcessor) -> MyAccountRepository {
+        MyAccountRepositoryImpl(configuration: configuration, requestProcessor: requestProcessor)
     }
     
     public static func thisDeviceRepository(storage: ValueStorage, currentDeviceInfoProvider: CurrentDeviceInfoProvider) -> ThisDeviceRepository {
