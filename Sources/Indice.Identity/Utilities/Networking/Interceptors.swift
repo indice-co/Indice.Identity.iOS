@@ -8,6 +8,7 @@
 import Foundation
 import IndiceNetworkClient
 
+/** Relies on a TokenStorageAccessor to read and add the proper Authorization header to requests in the chain. */
 public class AuthorizationHeaderInterceptor: NetworkClient.Interceptor {
     
     private let tokenAccessor: TokenStorageAccessor
@@ -29,12 +30,12 @@ public class AuthorizationHeaderInterceptor: NetworkClient.Interceptor {
 
 
 
-
+/** Relies on a provided ``AuthorizationService`` to try and refresh the access token in case of a 401 http error. */
 public class AuthorizingInterceptor: NetworkClient.Interceptor {
     
-     private let authServiceProvider: () -> IdentityClient.UserLogin?
+    private let authServiceProvider: () -> AuthorizationService?
     
-    public init(authServiceProvider: @escaping () -> IdentityClient.UserLogin?) {
+    public init(authServiceProvider: @escaping () -> AuthorizationService?) {
         self.authServiceProvider = authServiceProvider
     }
     

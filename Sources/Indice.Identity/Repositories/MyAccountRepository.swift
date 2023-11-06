@@ -11,43 +11,43 @@ import IndiceNetworkClient
 
 public class MyAccountRepositoryImpl : MyAccountRepository {
     
-    private let authorization: Authorization
-    private let networkClient: NetworkClient
+    private let configuration: IdentityConfig
+    private let requestProcessor: RequestProcessor
     
-    public init(authorization: Authorization, networkClient: NetworkClient) {
-        self.authorization = authorization
-        self.networkClient = networkClient
+    public init(configuration: IdentityConfig, requestProcessor: RequestProcessor) {
+        self.configuration = configuration
+        self.requestProcessor = requestProcessor
     }
     
     
     public func register(request registerRequest: RegisterUserRequest) async throws {
         let request = URLRequest.builder()
-            .post(path: authorization.baseUrl + "/api/account/register")
+            .post(path: configuration.baseUrl + "/api/account/register")
             .bodyJson(of: registerRequest)
             .add(header: .accept(type: .json))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
     public func verify(password passwordRequest: ValidatePasswordRequest) async throws -> CredentialsValidationInfo {
         let request = URLRequest.builder()
-            .post(path: authorization.baseUrl + "/api/account/validate-password")
+            .post(path: configuration.baseUrl + "/api/account/validate-password")
             .bodyJson(of: passwordRequest)
             .build()
         
-        return try await networkClient.fetch(request: request)
+        return try await requestProcessor.process(request: request)
     }
     
     public func verify(username usernameRequest: ValidateUsernameRequest) async throws -> UsernameStateInfo {
         let request = URLRequest.builder()
-            .post(path: authorization.baseUrl + "/api/account/username-exists")
+            .post(path: configuration.baseUrl + "/api/account/username-exists")
             .bodyJson(of: usernameRequest)
             .build()
         
         let result: UsernameStateInfo = try await {
             do {
-                try await networkClient.fetch(request: request)
+                try await requestProcessor.process(request: request)
                 return UsernameStateInfo(result: .unavailable)
             } catch {
                 guard let code = (error as? APIError)?.statusCode else {
@@ -67,71 +67,71 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
     
     public func forgot(password forgotPasswordRequest: ForgotPasswordRequest) async throws {
         let request = URLRequest.builder()
-            .post(path: authorization.baseUrl + "/api/account/forgot-password")
+            .post(path: configuration.baseUrl + "/api/account/forgot-password")
             .bodyJson(of: forgotPasswordRequest)
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
     public func forgot(passwordConfirmation confirmationRequest: ForgotPasswordConfirmation) async throws {
         let request = URLRequest.builder()
-            .put(path: authorization.baseUrl + "/api/account/forgot-password/confirmation")
+            .put(path: configuration.baseUrl + "/api/account/forgot-password/confirmation")
             .bodyJson(of: confirmationRequest)
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
     
     public func update(password: UpdatePasswordRequest) async throws {
         let request = URLRequest.builder()
-            .put(path: authorization.baseUrl + "/api/my/account/password")
+            .put(path: configuration.baseUrl + "/api/my/account/password")
             .bodyJson(of: password)
             .add(header: .accept(type: .json))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
     public func update(email emailRequest: UpdateEmailRequest) async throws {
         let request = URLRequest.builder()
-            .put(path: authorization.baseUrl + "/api/my/account/email")
+            .put(path: configuration.baseUrl + "/api/my/account/email")
             .bodyJson(of: emailRequest)
             .add(header: .accept(type: .json))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
     public func update(phone phoneRequest: UpdatePhoneRequest) async throws {
         let request = URLRequest.builder()
-            .put(path: authorization.baseUrl + "/api/my/account/phone-number")
+            .put(path: configuration.baseUrl + "/api/my/account/phone-number")
             .bodyJson(of: phoneRequest)
             .add(header: .accept(type: .json))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
     public func verifyEmail(with otpRequest: OtpTokenRequest) async throws {
         let request = URLRequest.builder()
-            .put(path: authorization.baseUrl + "/api/my/account/email/confirmation")
+            .put(path: configuration.baseUrl + "/api/my/account/email/confirmation")
             .bodyJson(of: otpRequest)
             .add(header: .accept(type: .json))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
     public func verifyPhone(with otpRequest: OtpTokenRequest) async throws {
         let request = URLRequest.builder()
-            .put(path: authorization.baseUrl + "/api/my/account/phone-number/confirmation")
+            .put(path: configuration.baseUrl + "/api/my/account/phone-number/confirmation")
             .bodyJson(of: otpRequest)
             .add(header: .accept(type: .json))
             .build()
         
-        try await networkClient.fetch(request: request)
+        try await requestProcessor.process(request: request)
     }
     
 }

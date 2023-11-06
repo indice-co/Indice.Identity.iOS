@@ -10,21 +10,21 @@ import IndiceNetworkClient
 
 class UserInfoRepositoryImpl: UserInfoRepository {
     
-    private let authorization: Authorization
-    private let networkClient: NetworkClient
+    private let configuration: IdentityConfig
+    private let requestProcessor: RequestProcessor
     
-    init(authorization: Authorization, networkClient: NetworkClient) {
-        self.authorization = authorization
-        self.networkClient = networkClient
+    init(configuration: IdentityConfig, requestProcessor: RequestProcessor) {
+        self.configuration = configuration
+        self.requestProcessor = requestProcessor
     }
     
     func userInfo() async throws -> UserInfo {
         let request = URLRequest.builder()
-            .get(path: authorization.baseUrl + "/connect/userinfo")
+            .get(path: configuration.baseUrl + "/connect/userinfo")
             .add(header: .accept(type: .json))
             .build()
         
-        return try await networkClient.fetch(request: request)
+        return try await requestProcessor.process(request: request)
     }
     
 }

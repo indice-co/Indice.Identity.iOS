@@ -1,6 +1,6 @@
 //
-//  IdentityClientLogin.swift
-//  
+//  AuthorizationService.swift
+//  Indice.Identity
 //
 //  Created by Nikolas Konstantakopoulos on 30/3/23.
 //
@@ -9,7 +9,7 @@ import Foundation
 import IndiceNetworkClient
 
 /** Protocol containing any login method available on the Identity server. */
-public protocol IdentityClientLogin {
+public protocol AuthorizationService: AnyObject {
     /** Try login with any grant */
     func login(withGrant grant: OAuth2Grant) async throws
     
@@ -34,26 +34,44 @@ public protocol IdentityClientLogin {
      */
     func revokeTokens() async throws
     
+    /** Generate the url used to initiate a authorization\_code flow  */
+    func authorizationUrl(withPkce pkce: PKCE) throws -> URL
     
     /** Generate the url used to initiate a authorization\_code flow  */
     func authorizationUrl(withPkce pkce: PKCE, andPrompt prompt: String) throws -> URL
     
     /** Generate the url used to end a user's session  */
     func endSessionUrl() throws -> URL
-    
-    /** Initiate the forgot password flow */
-    func forgotPasswordInitialize(email: String, returnUrl: String) async throws
-    
-    /** Confirm forgot password and set a new one */
-    func forgotPasswordConfirmation(token: String, email: String, password: String, passwordConfirmation: String, returnUrl: String) async throws
 }
 
 
 
-extension IdentityClient: IdentityClientLogin {
-    public typealias UserLogin = IdentityClientLogin
+internal class AuthorizationServiceImpl: AuthorizationService {
+
+    private let authRepository: AuthRepository
+    private let accountRepository: MyAccountRepository
+    private let deviceRepository: DevicesRepository
+    private let thisDeviceRepository: ThisDeviceRepository
+    private let tokenStorage: TokenStorage
+    private let client: Client
+    private let configuration: IdentityConfig
     
-    public var userLoginService: UserLogin { self }
+    internal init(authRepository: AuthRepository,
+                  accountRepository: MyAccountRepository,
+                  deviceRepository: DevicesRepository,
+                  thisDeviceRepository: ThisDeviceRepository,
+                  tokenStorage: TokenStorage,
+                  client: Client,
+                  configuration: IdentityConfig) {
+        self.authRepository = authRepository
+        self.accountRepository = accountRepository
+        self.deviceRepository = deviceRepository
+        self.thisDeviceRepository = thisDeviceRepository
+        self.tokenStorage = tokenStorage
+        self.client = client
+        self.configuration = configuration
+    }
+
     
     public func authorizeClient() async throws {
         tokenStorage.parse(try await authRepository.authorize(grant: .clientCredentials(client)))
@@ -133,39 +151,28 @@ extension IdentityClient: IdentityClientLogin {
                                             withBasicAuth: client.basicAuth)
         }
     }
-    
-    public func forgotPasswordInitialize(email: String, returnUrl: String) async throws {
-        try await accountRepository.forgot(password: .init(email: email, returnUrl: returnUrl))
+      
+    /** Create a prepared URL pointing to the authentication's proper endpoint in order to initiate an "Authorization Code" flow.
+        acr\_values, and ui\_locales are omitted as they can me appended by the consumer manually.
+     */
+    func authorizationUrl(withPkce pkce: PKCE) throws -> URL {
+        try authorizationUrl(withPkce: pkce, andPrompt: "login")
     }
-    
-    public func forgotPasswordConfirmation(token: String, email: String, password: String, passwordConfirmation: String, returnUrl: String) async throws {
-        try await accountRepository.forgot(passwordConfirmation: .init(email: email,
-                                                                       newPassword: password,
-                                                                       newPasswordConfirmation: passwordConfirmation,
-                                                                       returnUrl: returnUrl,
-                                                                       token: token))
-    }
-    
-}
-
-
-
-public extension IdentityClient /* IdentityClientLogin - Auth code helpers */ {
     
     /** Create a prepared URL pointing to the authentication's proper endpoint in order to initiate an "Authorization Code" flow.
         acr\_values, and ui\_locales are omitted as they can me appended by the consumer manually.
      */
-    func authorizationUrl(withPkce pkce: PKCE, andPrompt prompt: String = "login") throws -> URL {
-        guard var url = URL(string: authorization.authorizationEndpoint) else {
-            throw Errors.AuthUrl
+    func authorizationUrl(withPkce pkce: PKCE, andPrompt prompt: String) throws -> URL {
+        guard var url = URL(string: configuration.authorizationEndpoint) else {
+            throw IdentityClient.Errors.AuthUrl
         }
         
         let queryParams = ["client_id": client.id,
                            "client_secret": client.secret,
                            "scope": client.scope,
-                           "redirect_uri": authorization.authCallbackUri,
-                           "response_type": authorization.authCodeResponseType,
-                           "response_mode": authorization.authCodeResponseMode,
+                           "redirect_uri": client.urls.authorization,
+                           "response_type": configuration.authCodeResponseType,
+                           "response_mode": configuration.authCodeResponseMode,
                            "prompt": prompt,
                            // "state": nil, // Unused for now.
                            "nonce": pkce.nonce,
@@ -190,13 +197,13 @@ public extension IdentityClient /* IdentityClientLogin - Auth code helpers */ {
     }
     
     func endSessionUrl() throws -> URL {
-        guard var url = URL(string: authorization.logoutEndpoint) else {
-            throw Errors.AuthUrl
+        guard var url = URL(string: configuration.logoutEndpoint) else {
+            throw IdentityClient.Errors.AuthUrl
         }
         
         let queryParams: [URLQueryItem] = [
             .init(name: "id_token_hint",            value: tokenStorage.idToken),
-            .init(name: "post_logout_redirect_uri", value: authorization.logoutCallbackUri)
+            .init(name: "post_logout_redirect_uri", value: client.urls.postLogout)
         ]
         if #available(iOS 16.0, *) {
             url.append(queryItems: queryParams)

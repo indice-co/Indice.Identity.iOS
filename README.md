@@ -7,5 +7,17 @@ Swift Library Identity SDK.
 
 ## Installation
 
-To install Indice.Identity.iOS in your project add the clone url to your package manager in xcode
+### Swift Package Manager
 
+Add Indice.Identity.iOS as a dependency
+```swift
+dependencies: [
+    .package(url: "https://github.com/indice-co/Indice.Identity.iOS", .upToNextMajor(from: "1.0.0"))
+]
+```
+Or you can clone the repo, and add it manually.
+
+
+## Support for Indice Identity Server
+
+This package version has been tested with v7.3.28.

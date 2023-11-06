@@ -8,11 +8,13 @@
 import Foundation
 
 
-
-public protocol IdentityClientUserVerification {
+/** Service responsible for updating the users account */
+public protocol AccountService: AnyObject {
     /** Update  the user's current phone number */
+    @available(*, deprecated, renamed: "update(phone:otpChannel:)", message: "The async otpProvider is tricky too handle. Use the update(phone: String, otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> () instead, to get an otp completion handler.")
     func update(phone: String, otpChannel: TotpDeliveryChannel?, otpProvider: CallbackType.OtpProvider) async throws
     
+    /** Update  the user's current phone number */
     func update(phone: String, otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> ()
     
     /** Update  the user's current email */
@@ -20,11 +22,25 @@ public protocol IdentityClientUserVerification {
     
     /** Update the user's current password */
     func update(password: UpdatePasswordRequest) async throws
+    
+    
+    /** Initiate the forgot password flow */
+    func forgotPasswordInitialize(email: String, returnUrl: String) async throws
+    
+    /** Confirm forgot password and set a new one */
+    func forgotPasswordConfirmation(token: String, email: String, password: String, passwordConfirmation: String, returnUrl: String) async throws
 }
 
-extension IdentityClient : IdentityClientUserVerification {
+
+internal class AccountServiceImpl : AccountService {
     
-    public typealias UserVerification = IdentityClientUserVerification
+    private let accountRepository: MyAccountRepository
+    private let userService: UserService
+    
+    init(accountRepository: MyAccountRepository, userService: UserService) {
+        self.accountRepository = accountRepository
+        self.userService = userService
+    }
     
     public func update(phone: String, otpChannel: TotpDeliveryChannel? = nil, otpProvider: CallbackType.OtpProvider) async throws {
         
@@ -64,6 +80,20 @@ extension IdentityClient : IdentityClientUserVerification {
     public func update(password passwordRequest: UpdatePasswordRequest) async throws {
         try await accountRepository.update(password: passwordRequest)
     }
-        
+    
+    
+    
+    public func forgotPasswordInitialize(email: String, returnUrl: String) async throws {
+        try await accountRepository.forgot(password: .init(email: email, returnUrl: returnUrl))
+    }
+    
+    public func forgotPasswordConfirmation(token: String, email: String, password: String, passwordConfirmation: String, returnUrl: String) async throws {
+        try await accountRepository.forgot(passwordConfirmation: .init(email: email,
+                                                                       newPassword: password,
+                                                                       newPasswordConfirmation: passwordConfirmation,
+                                                                       returnUrl: returnUrl,
+                                                                       token: token))
+    }
+   
 }
 
