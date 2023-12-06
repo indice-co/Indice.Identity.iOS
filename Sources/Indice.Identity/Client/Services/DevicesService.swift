@@ -263,6 +263,8 @@ extension DevicesServiceImpl {
             let deviceIds    = thisDeviceRepository.ids
             let deviceInfo   = thisDeviceRepository.info
             let devicePin    = try CryptoUtils.prepare(pin: pin, withDeviceId: deviceIds.device, and: keys)
+            
+            
             /* TODO: This request generally has an OTP side-effect, except if the user has the otp_authenticated=true claim.
              Find a nice way to decide if it will and pass it to the OTP provider?
              */
