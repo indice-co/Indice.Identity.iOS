@@ -101,8 +101,10 @@ internal class AuthorizationServiceImpl: AuthorizationService {
     }
     
     public func login(username: String, password: String) async throws {
+        let ids = thisDeviceRepository.ids
         try await login(withGrant: .password(username: username,
                                              password: password,
+                                             deviceIds: ids,
                                              client: client))
     }
     
