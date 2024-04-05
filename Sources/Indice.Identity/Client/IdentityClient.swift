@@ -47,6 +47,9 @@ public struct IdentityClientErrors {
     /** Thrown when an authorization with biometric/4pin doesn't find the necessary crypto keys, probably the device is not setup for device\_authentication */
     public static let SecKeys     = APIError(description: "SecKeys are not available",             code: nil)
     
-    /** TODO comment */
+    /* TODO: Comment */
+    public static var UserCancel: APIError { APIError(description: "User canceled", code: nil) }
+    
+    /* TODO: Comment */
     public static let ServiceUnavailable = APIError(description: "Service unavailable",            code: nil)
 }

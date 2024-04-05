@@ -45,6 +45,22 @@ public protocol AuthorizationService: AnyObject {
 }
 
 
+fileprivate extension CryptoUtils.KeyResult {
+    var pair: KeyPair? {
+        switch self {
+        case .value(let pair): pair
+        default: nil
+        }
+    }
+    
+    var error: OSStatus? {
+        switch self {
+        case .error(let code): code
+        default: nil
+        }
+    }
+}
+
 
 internal class AuthorizationServiceImpl: AuthorizationService {
 
@@ -93,9 +109,7 @@ internal class AuthorizationServiceImpl: AuthorizationService {
     }
     
     public func login(withPin pin: String) async throws {
-        guard let keys = CryptoUtils.loadKeyPair(locked: false, tagged: .devicePin) else {
-            throw IdentityClient.Errors.SecKeys
-        }
+        let keys = try keyOrThrow(locked: false, tagged: .devicePin)
 
         let ids = thisDeviceRepository.ids
         let pinHash = try CryptoUtils.prepare(pin: pin,
@@ -106,9 +120,7 @@ internal class AuthorizationServiceImpl: AuthorizationService {
     }
     
     public func loginBiometric() async throws {
-        guard let keys = CryptoUtils.loadKeyPair(locked: false, tagged: .fingerprint) else {
-            throw IdentityClient.Errors.SecKeys
-        }
+        let keys = try keyOrThrow(locked: true, tagged: .fingerprint)
         
         let codeVerifier = CryptoRandom.uniqueId()
         let verifierHash = CryptoUtils.challenge(for: codeVerifier)
@@ -217,4 +229,20 @@ internal class AuthorizationServiceImpl: AuthorizationService {
     }
     
 }
+
+private extension AuthorizationServiceImpl {
+    
+    func keyOrThrow(locked: Bool, tagged tag: CryptoUtils.TagData? = nil) throws -> KeyPair {
+        switch CryptoUtils.loadKeyPair(locked: locked, tagged: tag) {
+        case .value(let pair): return pair
+        case .error(let code):
+            if code == errSecUserCanceled {
+                throw IdentityClient.Errors.UserCancel
+            } else {
+                throw IdentityClient.Errors.SecKeys
+            }
+        }
+    }
+}
+
 

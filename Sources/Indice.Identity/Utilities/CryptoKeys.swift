@@ -33,6 +33,11 @@ final class CryptoUtils {
         let `private` : SecKey
     }
     
+    enum KeyResult {
+        case value(pair: KeyPair)
+        case error(code: OSStatus)
+    }
+    
     class func challenge(for verifier: String, encoding: String.Encoding = .utf8) -> String {
         let data = verifier.data(using: encoding)!
         let hash = SHA256.hash(data: data)
@@ -56,7 +61,7 @@ final class CryptoUtils {
         return InnerKeyPair(public: publicKey, private: privateKey)
     }
 
-    class func loadKeyPair(locked: Bool, tagged tag: TagData? = nil) -> KeyPair? {
+    class func loadKeyPair(locked: Bool, tagged tag: TagData? = nil) -> KeyResult {
         let tagData = tag ?? SecHelper.createTag(lockedKey: locked)
         let query = SecHelper.createQuery(tagData: tagData, locked: locked)
         
@@ -64,13 +69,13 @@ final class CryptoUtils {
         let status = SecItemCopyMatching(query as CFDictionary, &item)
         guard status == errSecSuccess else {
             print("keychain don't have private key (\(status)")
-            return nil
+            return .error(code: status)
         }
         
         let privateKey = item as! SecKey
         let publicKey  = SecKeyCopyPublicKey(privateKey)!
         
-        return InnerKeyPair(public: publicKey, private: privateKey)
+        return .value(pair: InnerKeyPair(public: publicKey, private: privateKey))
     }
 
     @discardableResult
