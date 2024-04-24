@@ -285,6 +285,8 @@ extension DevicesServiceImpl {
                                                                                                      devicePin: devicePin,
                                                                                                      otp: otpResult.otpValue))
                     
+                    try await self.updateDeviceWith(deviceId: deviceIds.device)
+                    
                     self.thisDeviceRepository.update(registrationId: registration.registrationId)
                     self.quickLoginStatus.hasDevicePin = true
                 } catch {
@@ -333,6 +335,8 @@ extension DevicesServiceImpl {
                                                                                                                 deviceInfo: deviceInfo,
                                                                                                                 publicPem: devicePem,
                                                                                                                 otp: otpResult.otpValue))
+                    
+                    try await self.updateDeviceWith(deviceId: deviceIds.device)
                     
                     self.thisDeviceRepository.update(registrationId: registration.registrationId)
                     self.quickLoginStatus.hasFingerprint = true
