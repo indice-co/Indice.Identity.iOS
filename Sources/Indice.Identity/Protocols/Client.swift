@@ -28,14 +28,17 @@ public struct Client {
     /** Client Secret - Creating a public client deems the secret redundant, */
     public let secret : String?
     /** Client Scope */
-    public let scope  : String
+    public let userScope  : String
+    /** Client Scope */
+    public let appScope   : String
     /** Client urls. Authorization Urls and Post Logout url. */
     public let urls   : Urls
     
-    public init(id: String, secret: String?, scope: String, urls: Urls = .init()) {
+    public init(id: String, secret: String?, userScope: String, appScope: String, urls: Urls) {
         self.id = id
         self.secret = secret
-        self.scope = scope
+        self.userScope = userScope
+        self.appScope = appScope
         self.urls = urls
     }
 }

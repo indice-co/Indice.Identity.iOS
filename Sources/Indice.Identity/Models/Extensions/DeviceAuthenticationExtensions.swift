@@ -7,12 +7,12 @@
 
 import Foundation
 
-// MARK: - Authorization & initialization requests (Registration init & "pre login")
+// MARK: - Authorization & initialization requests (Registration init & "pre login").
 
 internal extension DeviceAuthentication.AuthorizationRequest {
     
     // MARK: - Biometric requests
-    /** Create an request body suitable for device biometric registration initialization*/
+    /** Create an request body suitable for device biometric registration initialization */
     static func biometrictInit(codeChallenge: String,
                                deviceIds ids: ThisDeviceIds,
                                client: Client) -> DeviceAuthentication.AuthorizationRequest {
@@ -23,7 +23,7 @@ internal extension DeviceAuthentication.AuthorizationRequest {
                      mode: .biometric)
     }
     
-    /** Create an request body suitable for device biometric login authorization*/
+    /** Create an request body suitable for device biometric login authorization */
     static func biometrictAuth(codeChallenge: String,
                                deviceIds ids: ThisDeviceIds,
                                client: Client) throws -> DeviceAuthentication.AuthorizationRequest {
@@ -60,7 +60,7 @@ internal extension DeviceAuthentication.AuthorizationRequest {
                      device_id: ids.device,
                      mode: mode,
                      client_id: client.id,
-                     scope: client.scope,
+                     scope: client.userScope,
                      registration_id: try {
                          if requiresRegId && ids.registration == nil {
                              throw IdentityClient.Errors.TrustDevice

@@ -1,6 +1,6 @@
 //
-//  File.swift
-//  
+//  DeviceExtensions.swift
+//  Indice.Identity
 //
 //  Created by Nikolas Konstantakopoulos on 31/3/23.
 //
