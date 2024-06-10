@@ -18,11 +18,9 @@ public struct OtpAuthenticatedGrant: OAuth2Grant {
         public var channel: TotpDeliveryChannel? = nil
     }
     
-    private let client : Client
     private let data   : Data
     
-    public init(client: Client, data: Data) {
-        self.client = client
+    public init(data: Data) {
         self.data   = data
     }
         
@@ -30,10 +28,7 @@ public struct OtpAuthenticatedGrant: OAuth2Grant {
         ["grant_type"    : Self.grantType,
          "otp"           : data.otp,
          "token"         : data.token,
-         "channel"       : data.channel?.rawValue,
-         "client_id"     : client.id,
-         "scope"         : client.scope,
-         "client_secret" : client.secret]
+         "channel"       : data.channel?.rawValue]
             .compactMapValues { $0 }
     }
 }
@@ -41,8 +36,8 @@ public struct OtpAuthenticatedGrant: OAuth2Grant {
 
 extension OAuth2Grant where Self == OtpAuthenticatedGrant {
     
-    static func otpAuthenticate(for client: Client, withData data: Self.Data) -> OtpAuthenticatedGrant{
-        OtpAuthenticatedGrant(client: client, data: data)
+    static func otpAuthenticate(withData data: Self.Data) -> OtpAuthenticatedGrant{
+        OtpAuthenticatedGrant(data: data)
     }
     
 }

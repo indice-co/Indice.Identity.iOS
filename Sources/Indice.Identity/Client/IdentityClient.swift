@@ -48,7 +48,7 @@ public struct IdentityClientErrors {
     public static let SecKeys     = APIError(description: "SecKeys are not available",             code: nil)
     
     /* TODO: Comment */
-    public static var UserCancel: APIError { APIError(description: "User canceled", code: nil) }
+    public static var UserCancel  = APIError(description: "User canceled",                         code: nil)
     
     /* TODO: Comment */
     public static let ServiceUnavailable = APIError(description: "Service unavailable",            code: nil)

@@ -12,96 +12,63 @@ import Foundation
 public struct DeviceAuthenticationGrant: OAuth2Grant {
     public static let grantType: String = "device_authentication"
     
-    let mode: String?
+    public enum Info {
+        case biometric
+        case devicePin(value: String)
+    }
+    
+    public enum Mode {
+        case biometric
+        case devicePin
+        
+        internal var value: String {
+            switch self {
+            case .biometric: "fingerprint"
+            case .devicePin: "pin"
+            }
+        }
+    }
+    
+    let mode: Mode
     let pin: String?
     let code: String?
     let code_signature: String?
     let code_verifier: String?
-    let device_id: String?
-    let registration_id: String?
     let public_key: String?
-    let client_id: String?
-    let scope: String?
     
     public var params: Params {
         ["grant_type"      : Self.grantType,
-         "mode"            : mode,
+         "mode"            : mode.value,
          "pin"             : pin,
          "code"            : code,
          "code_signature"  : code_signature,
          "code_verifier"   : code_verifier,
-         "device_id"       : device_id,
-         "registration_id" : registration_id,
-         "public_key"      : public_key,
-         "client_id"       : client_id,
-         "scope"           : scope]
+         "public_key"      : public_key]
             .compactMapValues { $0 }
-    }
-    
-    public static func biometrict(challenge: String,
-                                  codeSignature: String,
-                                  codeVerifier: String,
-                                  deviceId: String,
-                                  registrationId: String,
-                                  publicKey: String,
-                                  client: Client) -> Self {
-        DeviceAuthenticationGrant(mode            : "fingerprint",
-                                 pin             : nil,
-                                 code            : challenge,
-                                 code_signature  : codeSignature,
-                                 code_verifier   : codeVerifier,
-                                 device_id       : deviceId,
-                                 registration_id : registrationId,
-                                 public_key      : publicKey,
-                                 client_id       : client.id,
-                                 scope           : client.scope)
-    }
-    
-    public static func pin(pin: String,
-                           deviceId: String,
-                           registrationId: String,
-                           client: Client) -> Self {
-        DeviceAuthenticationGrant(mode            : "fingerprint",
-                                 pin             : pin,
-                                 code            : nil,
-                                 code_signature  : nil,
-                                 code_verifier   : nil,
-                                 device_id       : deviceId,
-                                 registration_id : registrationId,
-                                 public_key      : nil,
-                                 client_id       : client.id,
-                                 scope           : client.scope)
     }
 }
 
 
 
 public extension OAuth2Grant where Self == DeviceAuthenticationGrant {
-    static func pin(pin: String,
-                    deviceId: String,
-                    registrationId: String,
-                    client: Client) -> DeviceAuthenticationGrant {
-        DeviceAuthenticationGrant.pin(pin: pin,
-                                      deviceId: deviceId,
-                                      registrationId: registrationId,
-                                      client: client)
-    }
-    
     static func biometrict(challenge: String,
                            codeSignature: String,
                            codeVerifier: String,
-                           deviceId: String,
-                           registrationId: String,
-                           publicKey: String,
-                           client: Client) -> DeviceAuthenticationGrant {
-        DeviceAuthenticationGrant.biometrict(challenge: challenge,
-                                            codeSignature: codeSignature,
-                                            codeVerifier: codeVerifier,
-                                            deviceId: deviceId,
-                                            registrationId: registrationId,
-                                            publicKey: publicKey,
-                                            client: client)
+                           publicKey: String) -> Self {
+        DeviceAuthenticationGrant(mode            : .biometric,
+                                  pin             : nil,
+                                  code            : challenge,
+                                  code_signature  : codeSignature,
+                                  code_verifier   : codeVerifier,
+                                  public_key      : publicKey)
     }
     
-    
+    static func pin(value: String) -> Self {
+        DeviceAuthenticationGrant(mode            : .devicePin,
+                                  pin             : value,
+                                  code            : nil,
+                                  code_signature  : nil,
+                                  code_verifier   : nil,
+                                  public_key      : nil)
+    }
 }

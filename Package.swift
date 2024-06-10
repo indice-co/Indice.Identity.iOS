@@ -12,13 +12,15 @@ let package = Package(
             targets: ["Indice.Identity"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/indice-co/Indice.Swift.Networking", .upToNextMajor(from: "1.2.3"))
+        .package(url: "https://github.com/indice-co/Indice.Swift.Networking", .upToNextMajor(from: "1.2.3")),
+        .package(url: "https://github.com/SwiftyJSON/SwiftyJSON", .upToNextMajor(from: "5.0.2"))
     ],
     targets: [
         .target(
             name: "Indice.Identity",
             dependencies: [
-                .product(name: "IndiceNetworkClient", package: "Indice.Swift.Networking")
+                .product(name: "IndiceNetworkClient", package: "Indice.Swift.Networking"),
+                .product(name: "SwiftyJSON", package: "SwiftyJSON")
             ]
         ),
         .testTarget(
