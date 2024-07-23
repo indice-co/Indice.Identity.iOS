@@ -233,7 +233,7 @@ internal class AuthorizationServiceImpl: AuthorizationService {
         
         let queryParams = ["client_id"      : client.id,
                            "client_secret"  : client.secret,
-                           "scope"          : client.userScope,
+                           "scope"          : client.userScope.value,
                            "redirect_uri"   : client.urls.authorization,
                            "response_type"  : configuration.authCodeResponseType,
                            "response_mode"  : configuration.authCodeResponseMode,

@@ -9,19 +9,19 @@ import Foundation
 
 public struct DeviceInfo: Codable, Equatable {
     
-    public var deviceId: String? = nil
-    public var name: String? = nil
-    public var platform: DevicePlatform? = nil
-    public var isPushNotificationsEnabled: Bool? = nil
-    public var supportsPinLogin: Bool? = nil
-    public var supportsFingerprintLogin: Bool? = nil
-    public var model: String? = nil
-    public var osVersion: String? = nil
-    public var data: String? = nil
-    public var dateCreated: Date? = nil
-    public var lastSignInDate: Date? = nil
-    public var isTrusted: Bool? = nil
-    public var trustActivationDate: Date? = nil
-    public var canActivateDeviceTrust: Bool? = nil
-    public var clientType: DeviceClientType? = nil
+    public var deviceId: String?
+    public var name: String?
+    public var platform: DevicePlatform?
+    public var isPushNotificationsEnabled: Bool?
+    public var supportsPinLogin: Bool?
+    public var supportsFingerprintLogin: Bool?
+    public var model: String?
+    public var osVersion: String?
+    public var data: String?
+    public var dateCreated: Date?
+    public var lastSignInDate: Date?
+    public var isTrusted: Bool?
+    public var trustActivationDate: Date?
+    public var canActivateDeviceTrust: Bool?
+    public var clientType: DeviceClientType?
 }
