@@ -60,7 +60,7 @@ internal extension DeviceAuthentication.AuthorizationRequest {
                      device_id: ids.device,
                      mode: mode,
                      client_id: client.id,
-                     scope: client.userScope,
+                     scope: client.userScope.value,
                      registration_id: try {
                          if requiresRegId && ids.registration == nil {
                              throw IdentityClient.Errors.TrustDevice

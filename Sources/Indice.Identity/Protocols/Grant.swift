@@ -71,7 +71,7 @@ internal extension OAuth2Grant {
                   ? client.userScope
                   : client.appScope
         
-        let extras: Params = ["scope"         : scope,
+        let extras: Params = ["scope"         : scope.value,
                               "client_id"     : client.id,
                               "client_secret" : client.secret]
                                   .compactMapValues { $0 }

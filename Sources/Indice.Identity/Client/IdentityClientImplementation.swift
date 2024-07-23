@@ -74,7 +74,7 @@ internal class IdentityClientImpl: IdentityClient {
     
     public
     private(set) lazy
-    var networkClient: NetworkClient = {
+    var networkClient: RequestProcessor = {
         self.createNetworkClient(self)
     }()
     

@@ -379,9 +379,10 @@ extension DevicesServiceImpl {
         
         let swapDeviceId: String? = await {
             if currentTrustedCount >= identityOptions.maxTrustedDevicesCount {
-                if case .swap(let deviceInfo) = await deviceSelection(devices) {
+                switch await deviceSelection(devices) {
+                case .swap(let deviceInfo):
                     return deviceInfo.deviceId
-                } else {
+                case .aborted:
                     // TODO: this should throw something here?
                     return nil
                 }

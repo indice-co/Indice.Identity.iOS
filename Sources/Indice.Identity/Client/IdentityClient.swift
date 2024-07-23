@@ -16,8 +16,8 @@ public protocol IdentityClient: AnyObject {
     typealias Errors  = IdentityClientErrors
     typealias Options = IdentityClientOptions
     
-    var tokens: TokenStorageAccessor { get }
-    var networkClient: NetworkClient { get }
+    var tokens: TokenStorageAccessor    { get }
+    var networkClient: RequestProcessor { get }
     
     var authorizationService      : AuthorizationService      { get }
     var userService               : UserService               { get }

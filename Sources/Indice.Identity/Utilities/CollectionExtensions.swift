@@ -18,3 +18,18 @@ extension Collection {
         return self
     }
 }
+
+extension Collection where Element == Client.Scope {
+    
+    var value: String {
+        self.map(\.value).joined(separator: " ")
+    }
+
+    public static var defaultUserScopes: [Element] { [.profile,
+                                                      .openId,
+                                                      .email,
+                                                      .phone,
+                                                      .role,
+                                                      .offlineAccess,
+                                                      .identity] }
+}
