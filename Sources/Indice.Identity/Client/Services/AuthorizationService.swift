@@ -177,9 +177,6 @@ internal class AuthorizationServiceImpl: AuthorizationService {
             .with(deviceIds: thisDeviceRepository.ids)
         
         tokenStorage.parse(try await authRepository.authorize(grant: final))
-        
-        // try await refreshUserInfo()
-        // try await refreshDevices()
     }
     
     func tokenFor(authorizationDetails details: JSON, withGrant grant: OAuth2Grant) async throws -> TokenResponse {
@@ -193,7 +190,7 @@ internal class AuthorizationServiceImpl: AuthorizationService {
     
     public func refreshTokens() async throws {
         guard let refresh = tokenStorage.refreshToken else {
-            throw APIError.Unauthenticated
+            throw errorOfType(.authorization(error: .refreshTokenMissing))
         }
         
         try await login(withGrant: .refreshToken(with: refresh.value))
@@ -228,7 +225,7 @@ internal class AuthorizationServiceImpl: AuthorizationService {
      */
     func authorizationUrl(withPkce pkce: PKCE, andPrompt prompt: String) throws -> URL {
         guard var url = URL(string: configuration.authorizationEndpoint) else {
-            throw IdentityClient.Errors.AuthUrl
+            throw errorOfType(.url(malformedUrl: configuration.authorizationEndpoint))
         }
         
         let queryParams = ["client_id"      : client.id,
@@ -261,7 +258,7 @@ internal class AuthorizationServiceImpl: AuthorizationService {
     
     func endSessionUrl() throws -> URL {
         guard var url = URL(string: configuration.logoutEndpoint) else {
-            throw IdentityClient.Errors.AuthUrl
+            throw errorOfType(.url(malformedUrl: configuration.logoutEndpoint))
         }
         
         let queryParams: [URLQueryItem] = [
@@ -286,9 +283,9 @@ private extension AuthorizationServiceImpl {
         case .value(let pair): return pair
         case .error(let code):
             if code == errSecUserCanceled {
-                throw IdentityClient.Errors.UserCancel
+                throw errorOfType(.biometric(error: .userCanceled))
             } else {
-                throw IdentityClient.Errors.SecKeys
+                throw errorOfType(.biometric(error: .dataMissing))
             }
         }
     }

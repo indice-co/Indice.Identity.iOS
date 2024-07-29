@@ -140,6 +140,7 @@ private class SecHelper {
     static private let secKeyClass = kSecClassKey
     static private let secKeyType  = kSecAttrKeyTypeRSA
     
+    static private let pemRowSize  = 65
     static private let privateKeySize = 4096
     static private let pinKeyTag = "gr.indice.samples.flows.keys.sec-keys"
     static private let bioKeyTag = "gr.indice.samples.flows.bio-sec-keys"
@@ -191,20 +192,27 @@ private class SecHelper {
          kSecReturnRef          .string: true]
     }
     
-    class func convertDerToPem(from derData: Data) -> String {
-        func components(ofString string: String, withLength length: Int) -> [String] {
-            return stride(from: 0, to: string.count, by: length).map {
-                let start = string.index(string.startIndex, offsetBy: $0)
-                let end = string.index(start, offsetBy: length, limitedBy: string.endIndex) ?? string.endIndex
+    class func convertDerToPem(from DERData: Data) -> String {
+        func components(ofString string: String) -> [String] {
+            return stride(from: 0, to: string.count, by: pemRowSize).map { offset in
+                let start = string.index(string.startIndex,
+                                         offsetBy: offset)
+                
+                let end = string.index(start,
+                                       offsetBy: pemRowSize,
+                                       limitedBy: string.endIndex) ?? string.endIndex
+                
                 return String(string[start..<end])
             }
         }
         
-        let base64String = derData.base64EncodedString()
-        let lines = components(ofString: base64String, withLength: 65)
+        let base64String = DERData.base64EncodedString()
+        let lines = components(ofString: base64String)
         let joinedLines = lines.joined(separator: "\n")
         
-        return ("-----BEGIN RSA PUBLIC KEY-----\n" + joinedLines + "\n-----END RSA PUBLIC KEY-----")
+        return  "-----BEGIN RSA PUBLIC KEY-----\n"
+                + joinedLines
+                + "\n-----END RSA PUBLIC KEY-----"
     }
     
 }

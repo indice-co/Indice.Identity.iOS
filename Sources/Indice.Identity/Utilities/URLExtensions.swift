@@ -12,14 +12,14 @@ public extension URL {
     @available(iOS, deprecated: 16.0, message: "Use the built-in API instead 'append(queryItems: [URLQueryItem])'")
     mutating func appendQueryItems(_ items: [URLQueryItem]) throws {
         guard var urlComponents = URLComponents(string: absoluteString) else {
-            throw IdentityClient.Errors.AuthUrl
+            throw errorOfType(.url(malformedUrl: absoluteString))
         }
 
         let initialsParams = urlComponents.queryItems ??  []
         urlComponents.queryItems = initialsParams + items
         
         guard let newUrl = urlComponents.url else {
-            throw IdentityClient.Errors.Params
+            throw errorOfType(.url(malformedUrl: absoluteString))
         }
         
         self = newUrl

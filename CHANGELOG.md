@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.X.X] - XXXX-XX-XX
+
+### Breaking Changes
+- `APIError`
+
+
 
 ## [1.1.1] - 2024-07-23
 

@@ -9,7 +9,7 @@ import Foundation
 import SwiftyJSON
 import IndiceNetworkClient
 
-public struct ExtendedProblemDetails: NetworkError {
+public struct ExtendedProblemDetails: Decodable {
     
     static let defaultErrorText = "Unknown Business Error Occurred"
     

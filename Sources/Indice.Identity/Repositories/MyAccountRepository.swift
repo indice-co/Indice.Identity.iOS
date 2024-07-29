@@ -50,7 +50,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
                 try await requestProcessor.process(request: request)
                 return UsernameStateInfo(result: .unavailable)
             } catch {
-                guard let code = (error as? APIError)?.statusCode else {
+                guard let code = error.statusCode else {
                     throw error
                 }
                     

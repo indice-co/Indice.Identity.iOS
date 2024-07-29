@@ -43,12 +43,12 @@ public class AuthorizingInterceptor: NetworkClient.Interceptor {
         do {
             return try await completion(request)
         } catch {
-            guard (error as? APIError)?.statusCode == 401 else {
+            guard error.statusCode == 401 else {
                 throw error
             }
             
             guard let authService = authServiceProvider() else {
-                throw IdentityClient.Errors.ServiceUnavailable
+                throw errorOfType(.domain(unavailable: .authorization))
             }
             
             try await authService.refreshTokens()
