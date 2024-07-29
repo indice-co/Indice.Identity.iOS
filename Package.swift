@@ -12,9 +12,7 @@ let package = Package(
             targets: ["Indice.Identity"]),
     ],
     dependencies: [
-        // .package(url: "https://github.com/indice-co/Indice.Swift.Networking", .upToNextMajor(from: "1.2.3")),
-        // .package(url: "https://github.com/indice-co/Indice.Swift.Networking", .upToNextMinor(from: "1.3.0")),
-        .package(path: "/Users/nikolaskonstantakopoulos/Projects/Platform/Indice.Swift.Networking"),
+        .package(url: "https://github.com/indice-co/Indice.Swift.Networking", exact: "1.3.0"),
         .package(url: "https://github.com/SwiftyJSON/SwiftyJSON", .upToNextMajor(from: "5.0.2"))
     ],
     targets: [
