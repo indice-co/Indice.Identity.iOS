@@ -14,16 +14,19 @@ private class Repositories {
     private let requestProcessor: RequestProcessor
     private let valueStorage: ValueStorage
     private let currentDeviceInfoProvider: CurrentDeviceInfoProvider
-
-    init(repositoryFactory: RepositoryFactory.Type, 
+    private let errorParser: ErrorParser
+    
+    init(repositoryFactory: RepositoryFactory.Type,
          configuration: IdentityConfig,
          requestProcessor: RequestProcessor,
          valueStorage: ValueStorage,
+         errorParser: ErrorParser,
          currentDeviceInfoProvider: CurrentDeviceInfoProvider) {
         self.repositoryFactory = repositoryFactory
         self.configuration = configuration
         self.requestProcessor = requestProcessor
         self.valueStorage = valueStorage
+        self.errorParser = errorParser
         self.currentDeviceInfoProvider = currentDeviceInfoProvider
     }
     
@@ -36,7 +39,8 @@ private class Repositories {
     internal lazy
     var accountRepository: MyAccountRepository = {
         repositoryFactory.myAccountRepository(configuration: configuration,
-                                              requestProcessor: requestProcessor)
+                                              requestProcessor: requestProcessor,
+                                              errorParser: errorParser)
     }()
     
     internal lazy
@@ -92,6 +96,7 @@ internal class IdentityClientImpl: IdentityClient {
                     configuration: configuration,
                     requestProcessor: networkClient,
                     valueStorage: valueStorage,
+                    errorParser: errorParser,
                     currentDeviceInfoProvider: currentDeviceInfoProvider)
     }()
     
