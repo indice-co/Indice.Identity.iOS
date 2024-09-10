@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import IndiceNetworkClient
+
 
 public protocol RepositoryFactory {
     static func authRepository      (configuration: IdentityConfig, requestProcessor: RequestProcessor) -> AuthRepository

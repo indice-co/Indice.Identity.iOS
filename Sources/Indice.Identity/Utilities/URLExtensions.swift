@@ -27,3 +27,24 @@ public extension URL {
 }
 
 
+
+
+internal extension URLRequest {
+    
+    func adding(value: String?, forHeaderName name: String) -> URLRequest {
+        guard let value else { return self }
+        
+        var request = self
+        request.addValue(value, forHTTPHeaderField: name)
+        
+        return request
+    }
+    
+    func setting(value: String?, forHeaderName name: String) -> URLRequest {
+        var request = self
+        request.setValue(value, forHTTPHeaderField: name)
+        
+        return request
+    }
+    
+}

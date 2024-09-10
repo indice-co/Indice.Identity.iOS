@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import IndiceNetworkClient
+
 
 /**
  The IdentityClient! Encapsulates and manages all the services provided by the Indice.AspNet Identity library that are relevant to a client application.
@@ -15,10 +15,9 @@ import IndiceNetworkClient
 public protocol IdentityClient: AnyObject {
     typealias Error   = IdentityClientErrors
     typealias Options = IdentityClientOptions
-    
-    var tokens: TokenStorageAccessor    { get }
-    var networkClient: RequestProcessor { get }
-    
+
+    var requestProcessor          : RequestProcessor          { get }
+    var tokens                    : TokenStorageAccessor      { get }
     var authorizationService      : AuthorizationService      { get }
     var userService               : UserService               { get }
     var accountService            : AccountService            { get }
@@ -28,6 +27,7 @@ public protocol IdentityClient: AnyObject {
 
 
 public struct IdentityClientOptions {
-    var maxTrustedDevicesCount: Int = 1
+    var maxTrustedDevicesCount: Int  = 1
+    var userPersistantDeviceId: Bool = false
 }
 

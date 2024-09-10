@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import IndiceNetworkClient
+
 
 public enum IdentityClientErrors: Error, Equatable {
     
@@ -38,14 +38,17 @@ public enum IdentityClientErrors: Error, Equatable {
     public enum DeviceError: Equatable {
         case limitReached
     }
-}
-
-extension Swift.Error {
-    var statusCode: Int? {
-        (self as? NetworkClient.Error)?.statusCode
+    
+    public struct APIError {
+        let statusCode: Int
+        let details: ExtendedProblemDetails?
+        
+        public init(statusCode: Int, details: ExtendedProblemDetails?) {
+            self.statusCode = statusCode
+            self.details = details
+        }
     }
 }
-
 
 internal func errorOfType(_ provider: @autoclosure () -> IdentityClient.Error) -> IdentityClient.Error {
     provider()

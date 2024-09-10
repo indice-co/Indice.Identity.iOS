@@ -7,7 +7,6 @@
 
 import Foundation
 import SwiftyJSON
-import IndiceNetworkClient
 
 /** Protocol containing any login method available on the Identity server. */
 public protocol AuthorizationService: AnyObject {
@@ -228,10 +227,14 @@ internal class AuthorizationServiceImpl: AuthorizationService {
             throw errorOfType(.url(malformedUrl: configuration.authorizationEndpoint))
         }
         
+        guard let redirectUri = client.urls?.authorization else {
+            throw errorOfType(.url(malformedUrl: configuration.authorizationEndpoint))
+        }
+        
         let queryParams = ["client_id"      : client.id,
                            "client_secret"  : client.secret,
                            "scope"          : client.userScope.value,
-                           "redirect_uri"   : client.urls.authorization,
+                           "redirect_uri"   : redirectUri,
                            "response_type"  : configuration.authCodeResponseType,
                            "response_mode"  : configuration.authCodeResponseMode,
                            "prompt"         : prompt,
@@ -261,9 +264,13 @@ internal class AuthorizationServiceImpl: AuthorizationService {
             throw errorOfType(.url(malformedUrl: configuration.logoutEndpoint))
         }
         
+        guard let postLogout = client.urls?.postLogout else {
+            throw errorOfType(.url(malformedUrl: configuration.logoutEndpoint))
+        }
+        
         let queryParams: [URLQueryItem] = [
             .init(name: "id_token_hint",            value: tokenStorage.idToken),
-            .init(name: "post_logout_redirect_uri", value: client.urls.postLogout)]
+            .init(name: "post_logout_redirect_uri", value: postLogout)]
         
         if #available(iOS 16.0, *) {
             url.append(queryItems: queryParams)

@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import IndiceNetworkClient
+import NetworkUtilities
 
 class UserInfoRepositoryImpl: UserInfoRepository {
     

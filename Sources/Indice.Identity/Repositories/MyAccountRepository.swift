@@ -6,19 +6,19 @@
 //
 
 import Foundation
-import IndiceNetworkClient
-
+import NetworkUtilities
 
 public class MyAccountRepositoryImpl : MyAccountRepository {
     
     private let configuration: IdentityConfig
     private let requestProcessor: RequestProcessor
+    private let errorParser: ErrorParser
     
-    public init(configuration: IdentityConfig, requestProcessor: RequestProcessor) {
+    public init(configuration: IdentityConfig, requestProcessor: RequestProcessor, errorParser: ErrorParser) {
         self.configuration = configuration
         self.requestProcessor = requestProcessor
+        self.errorParser = errorParser
     }
-    
     
     public func register(request registerRequest: RegisterUserRequest) async throws {
         let request = URLRequest.builder()
@@ -50,7 +50,7 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
                 try await requestProcessor.process(request: request)
                 return UsernameStateInfo(result: .unavailable)
             } catch {
-                guard let code = error.statusCode else {
+                guard let code = errorParser.map(error)?.statusCode else {
                     throw error
                 }
                     

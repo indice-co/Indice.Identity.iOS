@@ -7,7 +7,7 @@
 
 import Foundation
 import SwiftyJSON
-import IndiceNetworkClient
+
 
 public struct ExtendedProblemDetails: Decodable {
     

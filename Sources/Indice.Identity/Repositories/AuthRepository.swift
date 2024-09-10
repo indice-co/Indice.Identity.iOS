@@ -6,8 +6,7 @@
 //
 
 import Foundation
-import IndiceNetworkClient
-
+import NetworkUtilities
 
 class AuthRepositoryImpl: AuthRepository {
     
@@ -20,13 +19,11 @@ class AuthRepositoryImpl: AuthRepository {
     }
     
     func authorize(grant: OAuth2Grant) async throws -> TokenResponse {
-        let request = URLRequest.builder()
+        try await requestProcessor.process(request: .builder()
             .post(path: configuration.tokenEndpoint)
             .bodyFormUtf8(params: grant.params)
             .add(header: .accept(type: .json))
-            .build()
-        
-        return try await requestProcessor.process(request: request)
+            .build())
     }
 
     func revoke(token: TokenType, withBasicAuth auth: String) async throws {

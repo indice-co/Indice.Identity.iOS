@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import IndiceNetworkClient
+
 
 
 final public class IdentityClientFactory {
@@ -32,14 +32,14 @@ final public class IdentityClientFactory {
         currentDeviceInfoProvider: CurrentDeviceInfoProvider,
         valueStorage: ValueStorage,
         tokenStorage: TokenStorage,
-        networkClientBuilder: ((IdentityClient) -> NetworkClient)? = nil) -> IdentityClient {
+        networkOptionsBuilder: @escaping ((IdentityClient) -> NetworkOptions)) -> IdentityClient {
             IdentityClientImpl(
                 client: client,
                 configuration: configuration,
                 currentDeviceInfoProvider: currentDeviceInfoProvider,
                 valueStorage: valueStorage,
                 tokenStorage: tokenStorage,
-                networkClientBuilder: networkClientBuilder)
+                networkOptionsBuilder: networkOptionsBuilder)
     }
     
     
@@ -57,14 +57,14 @@ final public class IdentityClientFactory {
         baseUrl: String,
         client: Client,
         currentDeviceInfoProvider: CurrentDeviceInfoProvider,
-        networkClientBuilder: ((IdentityClient) -> NetworkClient)? = nil) -> IdentityClient {
+        networkOptionsBuilder: @escaping ((IdentityClient) -> NetworkOptions)) -> IdentityClient {
         IdentityClientImpl(
             client: client,
             configuration: .init(baseUrl: baseUrl),
             currentDeviceInfoProvider: currentDeviceInfoProvider,
             valueStorage: UserDefaults.standard,
             tokenStorage: .ephemeral,
-            networkClientBuilder: networkClientBuilder)
+            networkOptionsBuilder: networkOptionsBuilder)
     }
     
 }

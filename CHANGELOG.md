@@ -1,9 +1,16 @@
 # Changelog
 
-## [1.X.X] - XXXX-XX-XX
+## [X.X.X] - XXXX-XX-XX
+
+### Changes
+- `IdentityClient` doesn't use the `NetworkClient` any more as a default http client.<br>
+  If you rely on the `NetworkClient` included with this package, *dont*. It will eventually be fully removed as a dependency. 
+- `NetworkOptions` to include `ErrorParser` in order to transform the relevant errors of the `RequestProcessor` to concrete ones if possible.
+- `Client.urls` is now nullable.   
 
 ### Breaking Changes
-- `APIError`
+- Changed errors thrown by the client. @see `IdentityClient.Error`.
+- `IdentityClientFactory.create` network builder lambda to return `NetworkOptions`.
 
 
 
