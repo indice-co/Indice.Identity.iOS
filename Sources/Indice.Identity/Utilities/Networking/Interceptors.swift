@@ -17,8 +17,7 @@ public class AuthorizationHeaderInterceptor: NetworkClient.Interceptor {
         self.tokenAccessor = tokenAccessor
     }
     
-    
-    public func process(_ request: URLRequest, completion: (URLRequest) async throws -> Data) async throws -> Data {
+    public func process(_ request: URLRequest, completion: (URLRequest) async throws -> NetworkClient.Result) async throws -> NetworkClient.Result {
         if let authorization = tokenAccessor.authorization {
             return try await completion(request.adding(header: .authorisation(auth: authorization)))
         }
@@ -39,7 +38,7 @@ public class AuthorizingInterceptor: NetworkClient.Interceptor {
         self.authServiceProvider = authServiceProvider
     }
     
-    public func process(_ request: URLRequest, completion: (URLRequest) async throws -> Data) async throws -> Data {
+    public func process(_ request: URLRequest, completion: (URLRequest) async throws -> NetworkClient.Result) async throws -> NetworkClient.Result {
         do {
             return try await completion(request)
         } catch {
