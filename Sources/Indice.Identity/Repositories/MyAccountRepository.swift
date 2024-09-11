@@ -12,12 +12,10 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
     
     private let configuration: IdentityConfig
     private let requestProcessor: RequestProcessor
-    private let errorParser: ErrorParser
     
-    public init(configuration: IdentityConfig, requestProcessor: RequestProcessor, errorParser: ErrorParser) {
+    public init(configuration: IdentityConfig, requestProcessor: RequestProcessor) {
         self.configuration = configuration
         self.requestProcessor = requestProcessor
-        self.errorParser = errorParser
     }
     
     public func register(request registerRequest: RegisterUserRequest) async throws {
@@ -39,30 +37,11 @@ public class MyAccountRepositoryImpl : MyAccountRepository {
         return try await requestProcessor.process(request: request)
     }
     
-    public func verify(username usernameRequest: ValidateUsernameRequest) async throws -> UsernameStateInfo {
-        let request = URLRequest.builder()
+    public func verify(username usernameRequest: ValidateUsernameRequest) async throws {
+        try await requestProcessor.process(request: .builder()
             .post(path: configuration.baseUrl + "/api/account/username-exists")
             .bodyJson(of: usernameRequest)
-            .build()
-        
-        let result: UsernameStateInfo = try await {
-            do {
-                try await requestProcessor.process(request: request)
-                return UsernameStateInfo(result: .unavailable)
-            } catch {
-                guard let code = errorParser.map(error)?.statusCode else {
-                    throw error
-                }
-                    
-                switch code {
-                case 404: return UsernameStateInfo(result: .available)
-                case 302: return UsernameStateInfo(result: .unavailable)
-                default: throw error
-                }
-            }
-        }()
-        
-        return result
+            .build())
     }
     
     public func forgot(password forgotPasswordRequest: ForgotPasswordRequest) async throws {

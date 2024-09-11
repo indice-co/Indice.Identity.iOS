@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.2.0] - 2024-09-10
+## [1.2.0] - 2024-09-11
 
 ### Changes
 - `IdentityClient` doesn't use the `NetworkClient` any more as a default http client.<br>

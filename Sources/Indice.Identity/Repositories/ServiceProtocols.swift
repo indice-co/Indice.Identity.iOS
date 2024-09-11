@@ -40,7 +40,7 @@ public protocol MyAccountRepository: AnyObject {
     func register(request: RegisterUserRequest) async throws
     
     func verify(password: ValidatePasswordRequest) async throws -> CredentialsValidationInfo
-    func verify(username: ValidateUsernameRequest) async throws -> UsernameStateInfo
+    func verify(username: ValidateUsernameRequest) async throws
     
     func forgot(password: ForgotPasswordRequest) async throws
     func forgot(passwordConfirmation: ForgotPasswordConfirmation) async throws
