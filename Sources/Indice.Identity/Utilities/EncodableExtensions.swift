@@ -8,7 +8,7 @@
 import Foundation
 
 public extension Encodable {
-    /** Return the object as a Dictionary. Mainly used to aid creating a x-www-form-urlencoded payload. */
+    /// Return the object as a Dictionary. Mainly used to aid creating a x-www-form-urlencoded payload.
     var asDict : [String: Any]? {
         guard let data = try? JSONEncoder().encode(self) else { return nil }
         guard let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String:Any] else { return nil }

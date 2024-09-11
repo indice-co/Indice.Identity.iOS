@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import IndiceNetworkClient
 
 private class Repositories {
     
@@ -15,16 +14,19 @@ private class Repositories {
     private let requestProcessor: RequestProcessor
     private let valueStorage: ValueStorage
     private let currentDeviceInfoProvider: CurrentDeviceInfoProvider
-
-    init(repositoryFactory: RepositoryFactory.Type, 
+    private let errorParser: ErrorParser
+    
+    init(repositoryFactory: RepositoryFactory.Type,
          configuration: IdentityConfig,
          requestProcessor: RequestProcessor,
          valueStorage: ValueStorage,
+         errorParser: ErrorParser,
          currentDeviceInfoProvider: CurrentDeviceInfoProvider) {
         self.repositoryFactory = repositoryFactory
         self.configuration = configuration
         self.requestProcessor = requestProcessor
         self.valueStorage = valueStorage
+        self.errorParser = errorParser
         self.currentDeviceInfoProvider = currentDeviceInfoProvider
     }
     
@@ -37,7 +39,8 @@ private class Repositories {
     internal lazy
     var accountRepository: MyAccountRepository = {
         repositoryFactory.myAccountRepository(configuration: configuration,
-                                              requestProcessor: requestProcessor)
+                                              requestProcessor: requestProcessor,
+                                              errorParser: errorParser)
     }()
     
     internal lazy
@@ -70,13 +73,22 @@ internal class IdentityClientImpl: IdentityClient {
     
     public var tokens: TokenStorageAccessor { get { tokenStorage } }
 
-    private let createNetworkClient: (IdentityClient) -> NetworkClient
+    private let networkOptionsBuilder: (IdentityClient) -> NetworkOptions
+    private lazy var networkOptions: NetworkOptions = networkOptionsBuilder(self)
     
-    public
-    private(set) lazy
-    var networkClient: RequestProcessor = {
-        self.createNetworkClient(self)
+    private(set)
+    lazy var requestProcessor: any RequestProcessor = {
+        networkOptions.processor()
     }()
+    
+    private(set)
+    lazy var networkClient: RequestProcessor = {
+        RequestProcessorWrapper(processor: requestProcessor,
+                                tokenAccessor: tokenStorage)
+    }()
+    
+    private(set)
+    lazy var errorParser: ErrorParser = networkOptions.errorParser
     
     private lazy
     var repositories: Repositories = {
@@ -84,6 +96,7 @@ internal class IdentityClientImpl: IdentityClient {
                     configuration: configuration,
                     requestProcessor: networkClient,
                     valueStorage: valueStorage,
+                    errorParser: errorParser,
                     currentDeviceInfoProvider: currentDeviceInfoProvider)
     }()
     
@@ -128,7 +141,8 @@ internal class IdentityClientImpl: IdentityClient {
     public
     private(set)
     lazy var userRegistrationService: UserRegistrationService = {
-        UserRegistrationServiceImpl(accountRepository: repositories.accountRepository)
+        UserRegistrationServiceImpl(accountRepository: repositories.accountRepository,
+                                    errorParser: errorParser)
     }()
     
     
@@ -139,17 +153,14 @@ internal class IdentityClientImpl: IdentityClient {
                 currentDeviceInfoProvider: CurrentDeviceInfoProvider,
                 valueStorage: ValueStorage = UserDefaults.standard,
                 tokenStorage: TokenStorage = .ephemeral,
-                networkClientBuilder: ((IdentityClient) -> NetworkClient)? = nil) {
+                networkOptionsBuilder: @escaping ((IdentityClient) -> NetworkOptions)) {
         self.client = client
         self.configuration = configuration
         self.currentDeviceInfoProvider = currentDeviceInfoProvider
         self.valueStorage = valueStorage
         self.tokenStorage = tokenStorage
         self.options = options
-        self.createNetworkClient = networkClientBuilder ?? { client in
-            NetworkClient(interceptors: [AuthorizationHeaderInterceptor(tokenAccessor: client.tokens),
-                                         AuthorizingInterceptor(authServiceProvider: { [weak client] in client?.authorizationService })])
-        }
+        self.networkOptionsBuilder = networkOptionsBuilder
     }
     
 }

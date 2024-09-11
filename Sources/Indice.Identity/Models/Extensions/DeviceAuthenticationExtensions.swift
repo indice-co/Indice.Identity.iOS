@@ -63,7 +63,7 @@ internal extension DeviceAuthentication.AuthorizationRequest {
                      scope: client.userScope.value,
                      registration_id: try {
                          if requiresRegId && ids.registration == nil {
-                             throw IdentityClient.Errors.TrustDevice
+                             throw errorOfType(.authorization(error: .registrationIdMissing))
                          }
                          return ids.registration
                      }(),

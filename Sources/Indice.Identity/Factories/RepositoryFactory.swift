@@ -6,12 +6,12 @@
 //
 
 import Foundation
-import IndiceNetworkClient
+
 
 public protocol RepositoryFactory {
     static func authRepository      (configuration: IdentityConfig, requestProcessor: RequestProcessor) -> AuthRepository
     static func userRepository      (configuration: IdentityConfig, requestProcessor: RequestProcessor) -> UserInfoRepository
-    static func myAccountRepository (configuration: IdentityConfig, requestProcessor: RequestProcessor) -> MyAccountRepository
+    static func myAccountRepository (configuration: IdentityConfig, requestProcessor: RequestProcessor, errorParser: ErrorParser) -> MyAccountRepository
     static func devicesRepository   (configuration: IdentityConfig, requestProcessor: RequestProcessor) -> DevicesRepository
     static func thisDeviceRepository(storage: ValueStorage, currentDeviceInfoProvider: CurrentDeviceInfoProvider) -> ThisDeviceRepository
 }
@@ -30,8 +30,8 @@ internal class DefaultRepositoryFactory: RepositoryFactory {
         DevicesRepositoryImpl(configuration: configuration, requestProcessor: requestProcessor)
     }
     
-    public static func myAccountRepository(configuration: IdentityConfig, requestProcessor: RequestProcessor) -> MyAccountRepository {
-        MyAccountRepositoryImpl(configuration: configuration, requestProcessor: requestProcessor)
+    public static func myAccountRepository(configuration: IdentityConfig, requestProcessor: RequestProcessor, errorParser: ErrorParser) -> MyAccountRepository {
+        MyAccountRepositoryImpl(configuration: configuration, requestProcessor: requestProcessor, errorParser: errorParser)
     }
     
     public static func thisDeviceRepository(storage: ValueStorage, currentDeviceInfoProvider: CurrentDeviceInfoProvider) -> ThisDeviceRepository {

@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import IndiceNetworkClient
+import NetworkUtilities
 
 /** Registers a new user and aids to the username/password verification prior. */
 public protocol UserRegistrationService {
@@ -19,9 +19,11 @@ public protocol UserRegistrationService {
 internal class UserRegistrationServiceImpl: UserRegistrationService {
 
     private let accountRepository: MyAccountRepository
+    private let errorParser: ErrorParser
     
-    init(accountRepository: MyAccountRepository) {
+    init(accountRepository: MyAccountRepository, errorParser: ErrorParser) {
         self.accountRepository = accountRepository
+        self.errorParser = errorParser
     }
     
     public func register(request: RegisterUserRequest) async throws {
@@ -29,7 +31,24 @@ internal class UserRegistrationServiceImpl: UserRegistrationService {
     }
 
     public func verify(username: String) async throws -> UsernameStateInfo {
-        try await accountRepository.verify(username: .init(userName: username))
+        let result: UsernameStateInfo = try await {
+            do {
+                try await accountRepository.verify(username: .init(userName: username))
+                return UsernameStateInfo(result: .unavailable)
+            } catch {
+                guard let code = errorParser.map(error)?.statusCode else {
+                    throw error
+                }
+                    
+                switch code {
+                case 404: return UsernameStateInfo(result: .available)
+                case 302: return UsernameStateInfo(result: .unavailable)
+                default: throw error
+                }
+            }
+        }()
+        
+        return result
     }
     
     public func verify(password: String) async throws -> [PasswordRuleInfo] {

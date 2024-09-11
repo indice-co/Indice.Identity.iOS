@@ -47,7 +47,7 @@ public struct Client {
     /** Client Scope */
     public let appScope   : [Scope]
     /** Client urls. Authorization Urls and Post Logout url. */
-    public let urls       : Urls
+    public let urls       : Urls?
     
     @available(*, deprecated, message: "Use the new ctor that accepts a collection of Client.Scope")
     public init(id: String, secret: String?, userScope: String, appScope: String, urls: Urls) {
@@ -62,7 +62,7 @@ public struct Client {
         self.urls = urls
     }
     
-    public init(id: String, secret: String?, userScope: [Scope], appScope: [Scope], urls: Urls) {
+    public init(id: String, secret: String?, userScope: [Scope], appScope: [Scope], urls: Urls?) {
         self.id = id
         self.secret = secret
         self.userScope = userScope
