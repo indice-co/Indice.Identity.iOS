@@ -39,8 +39,7 @@ private class Repositories {
     internal lazy
     var accountRepository: MyAccountRepository = {
         repositoryFactory.myAccountRepository(configuration: configuration,
-                                              requestProcessor: requestProcessor,
-                                              errorParser: errorParser)
+                                              requestProcessor: requestProcessor)
     }()
     
     internal lazy
