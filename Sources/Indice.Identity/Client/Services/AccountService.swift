@@ -18,7 +18,7 @@ public protocol AccountService: AnyObject {
     func update(phone: String, otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> ()
     
     /** Update  the user's current email */
-    func update(email: String, otpChannel: TotpDeliveryChannel?) async throws
+    func update(email: String, returnUrl: String?) async throws
     
     /** Update the user's current password */
     func update(password: UpdatePasswordRequest) async throws
@@ -71,8 +71,8 @@ internal class AccountServiceImpl : AccountService {
     }
     
     
-    public func update(email: String, otpChannel: TotpDeliveryChannel? = nil) async throws {
-        try await accountRepository.update(email: .init(email: email, returnUrl: nil /* Set return URL? */))
+    public func update(email: String, returnUrl: String?) async throws {
+        try await accountRepository.update(email: .init(email: email, returnUrl: returnUrl /* Set return URL? */))
         // TODO: Complete flow here?
         // User would go to mail, and then manually return to the app to check if their mail is verified.
     }
