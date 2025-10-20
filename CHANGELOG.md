@@ -1,5 +1,17 @@
 # Changelog
 
+## [X.X.X] - 2025-XX-XX
+
+### Breaking changes
+- Rename the package and import to `IdentityClient`. Find/Replace all your imports you'll be fine.
+- `AuthorizationService.generateGrant(for:)` returns `AuthorizationSecurityData`, a wrapper over the `DeviceAuthenticationGrant`. The grant is available via the `grant` property of the struct.
+
+### Changes
+- Added `SecureStorage` class, that uses the SecItem API.
+- Added `IdentityClient` uses `SecureStorage` for sensitive data storage.
+- Added `AuthorizationService` exposes a `signWithBiometricSecurityContext(_:dataType:)` method that signs a `Swift.Data` struct with the security context of the latest successful biometric grant flow.
+
+
 ## [1.2.1] - 2024-09-11
 
 ### Changes
