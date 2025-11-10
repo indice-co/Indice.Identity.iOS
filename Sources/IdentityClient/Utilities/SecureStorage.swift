@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class SecureStorage {
+final public class SecureStorage: Sendable {
 
     private let service : String
     private let purgeTag: String

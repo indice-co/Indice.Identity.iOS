@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct PasswordRuleInfo: Decodable {
+public struct PasswordRuleInfo: Decodable, Sendable {
     public let code: String?
     public let description: String
     public let requirement: String

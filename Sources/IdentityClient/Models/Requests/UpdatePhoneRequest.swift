@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct UpdatePhoneRequest: Codable {
+public struct UpdatePhoneRequest: Codable, Sendable {
     public let phoneNumber: String
     public let deliveryChannel: TotpDeliveryChannel?
     

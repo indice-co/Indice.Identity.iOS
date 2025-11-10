@@ -10,7 +10,7 @@ import Foundation
 /**
  Provides info to the Identity client about the user's device that are not accessible without a UI specific lib.
  */
-public protocol CurrentDeviceInfoProvider: AnyObject {
+public protocol CurrentDeviceInfoProvider: AnyObject, Sendable {
     /** A custom name of the device - usually a user given one. */
     var name      : String { get }
     /** The model of the device */

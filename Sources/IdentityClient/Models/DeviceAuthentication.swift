@@ -12,16 +12,16 @@ public final class DeviceAuthentication {
     public typealias Platform = DevicePlatform
     public typealias Mode = TrustDeviceMode
 
-    public struct ChallengeResponse: Decodable {
+    public struct ChallengeResponse: Decodable, Sendable {
         public let challenge: String
     }
     
-    public struct RegistrationResult: Decodable {
+    public struct RegistrationResult: Decodable, Sendable {
         // public let deviceId: String
         public let registrationId: String
     }
     
-    public struct AuthorizationRequest: Codable {
+    public struct AuthorizationRequest: Codable, Sendable {
         public var code_challenge: String
         public var device_id: String
         public var mode: TrustDeviceMode
@@ -47,7 +47,7 @@ public final class DeviceAuthentication {
         }
     }
     
-    public struct RegistrationRequest: Codable {
+    public struct RegistrationRequest: Codable, Sendable {
         
         public let code: String?
         public let code_verifier: String?

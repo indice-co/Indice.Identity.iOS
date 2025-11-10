@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum UsernameState: Decodable {
+public enum UsernameState: Decodable, Sendable {
     case available
     case unavailable
 }

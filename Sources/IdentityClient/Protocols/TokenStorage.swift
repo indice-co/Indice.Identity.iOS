@@ -12,7 +12,7 @@ import Foundation
  Access the stored tokens of an auth response.
  It exists only to stop consumers of the ``TokenStorage`` from
  */
-public protocol TokenStorageAccessor: AnyObject {
+public protocol TokenStorageAccessor: Actor {
     var idToken       : String?    { get }
     var refreshToken  : TokenType? { get }
     var accessToken   : TokenType? { get }

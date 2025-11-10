@@ -9,10 +9,10 @@ import Foundation
 
 
 /** AuthorizationEndpoint describes basic properties regarding an Identity Authorization Server.   */
-public struct IdentityConfig {
+public struct IdentityConfig: Sendable {
 
     /** Endpoints for trusting device (biometrics/4pin) */
-    public struct DeviceTrustEndpoint {
+    public struct DeviceTrustEndpoint: Sendable {
         public let initialization : URL
         public let completion     : URL
         public let authorization  : URL

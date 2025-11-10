@@ -7,11 +7,11 @@
 
 import Foundation
 
-public struct NetworkOptions {
-    let processor   : () -> RequestProcessor
+public struct NetworkOptions: Sendable {
+    let processor   : @Sendable () -> RequestProcessor
     let errorParser : ErrorParser
     
-    public init(processor: @escaping () -> RequestProcessor, errorParser: ErrorParser) {
+    public init(processor: @Sendable @escaping () -> RequestProcessor, errorParser: ErrorParser) {
         self.processor = processor
         self.errorParser = errorParser
     }

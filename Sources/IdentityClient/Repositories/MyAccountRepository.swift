@@ -8,7 +8,7 @@
 import Foundation
 import NetworkUtilities
 
-public class MyAccountRepositoryImpl : MyAccountRepository {
+final public class MyAccountRepositoryImpl : MyAccountRepository {
     
     private let configuration: IdentityConfig
     private let requestProcessor: RequestProcessor

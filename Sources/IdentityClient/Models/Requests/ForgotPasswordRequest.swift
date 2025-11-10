@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct ForgotPasswordRequest: Codable {
+public struct ForgotPasswordRequest: Codable, Sendable {
     public let email: String
     public let returnUrl: String?
     

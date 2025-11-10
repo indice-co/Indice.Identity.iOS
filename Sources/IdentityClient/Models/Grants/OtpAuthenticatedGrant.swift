@@ -12,7 +12,7 @@ public struct OtpAuthenticatedGrant: OAuth2Grant {
     
     static public let grantType: String = "otp_authenticate"
     
-    public struct Data {
+    public struct Data: Sendable {
         public let token: String
         public var otp: String? = nil
         public var channel: TotpDeliveryChannel? = nil

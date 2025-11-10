@@ -41,7 +41,7 @@ public struct ValueStorageKey: Sendable {
 
  UseDefaults conform to this protocol, and are used as the default implementation within the library.
  */
-public protocol ValueStorage: AnyObject {
+public protocol ValueStorage: AnyObject, Sendable {
     typealias Key = ValueStorageKey
     
     func store(value: Any, forKey: Key)

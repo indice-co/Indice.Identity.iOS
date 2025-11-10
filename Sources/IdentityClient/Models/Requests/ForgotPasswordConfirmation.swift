@@ -8,7 +8,7 @@
 import Foundation
 
 
-public struct ForgotPasswordConfirmation: Codable {
+public struct ForgotPasswordConfirmation: Codable, Sendable {
     
     public let email: String
     public let newPassword: String

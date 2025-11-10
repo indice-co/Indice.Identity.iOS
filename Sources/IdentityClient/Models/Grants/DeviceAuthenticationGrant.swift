@@ -12,12 +12,12 @@ import Foundation
 public struct DeviceAuthenticationGrant: OAuth2Grant {
     public static let grantType: String = "device_authentication"
     
-    public enum Info {
+    public enum Info: Sendable {
         case biometric
         case devicePin(value: String)
     }
     
-    public enum Mode {
+    public enum Mode: Sendable {
         case biometric
         case devicePin
         

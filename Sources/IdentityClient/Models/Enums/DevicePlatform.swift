@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum DevicePlatform: String, Codable, CaseIterable {
+public enum DevicePlatform: String, Codable, Sendable, CaseIterable {
     case _none = "None"
     case android = "Android"
     case ios = "iOS"

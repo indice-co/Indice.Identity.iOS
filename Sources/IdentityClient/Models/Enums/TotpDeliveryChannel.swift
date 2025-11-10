@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum TotpDeliveryChannel: String, Codable, CaseIterable {
+public enum TotpDeliveryChannel: String, Sendable, Codable, CaseIterable {
     case sms = "Sms"
     case email = "Email"
     case telephone = "Telephone"

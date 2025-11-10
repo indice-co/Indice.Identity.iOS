@@ -8,7 +8,7 @@
 import Foundation
 
 /** A token storage that keeps its values only as long as the instance exists. */
-public class EphemeralTokenStorage: TokenStorage {
+public actor EphemeralTokenStorage: TokenStorage {
     
     public private(set) var idToken: String?
     public private(set) var refreshToken: TokenType?

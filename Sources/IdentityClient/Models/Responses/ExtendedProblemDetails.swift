@@ -8,7 +8,7 @@
 import Foundation
 
 
-public struct ExtendedProblemDetails: Decodable, Sendable {
+public struct ExtendedProblemDetails: Decodable, Sendable, Sendable {
     
     static let defaultErrorText = "Unknown Business Error Occurred"
     

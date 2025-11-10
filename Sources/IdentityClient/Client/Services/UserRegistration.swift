@@ -8,15 +8,8 @@
 import Foundation
 
 
-/** Registers a new user and aids to the username/password verification prior. */
-public protocol UserRegistrationService {
-    func register(request: RegisterUserRequest) async throws
-    
-    func verify(username: String) async throws -> UsernameStateInfo
-    func verify(password: String) async throws -> [PasswordRuleInfo]
-}
-
-internal class UserRegistrationServiceImpl: UserRegistrationService {
+/// Registers a new user and aids to the username/password verification prior
+public actor UserRegistrationService {
 
     private let accountRepository: MyAccountRepository
     private let errorParser: ErrorParser

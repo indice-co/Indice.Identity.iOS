@@ -9,6 +9,7 @@ import Foundation
 
 
 
+/*
 final public class IdentityClientFactory {
     
     @available(*, unavailable)
@@ -32,7 +33,7 @@ final public class IdentityClientFactory {
         currentDeviceInfoProvider: CurrentDeviceInfoProvider,
         valueStorage: ValueStorage,
         tokenStorage: TokenStorage,
-        networkOptionsBuilder: @escaping ((IdentityClient) -> NetworkOptions)) -> IdentityClient {
+        networkOptionsBuilder: @escaping @Sendable ((IdentityClient) -> NetworkOptions)) -> IdentityClient {
             IdentityClientImpl(
                 client: client,
                 configuration: configuration,
@@ -69,3 +70,4 @@ final public class IdentityClientFactory {
     
 }
 
+*/

@@ -13,16 +13,8 @@ public class UserData: ObservableObject {
     var info: UserInfo? = nil
 }
 
-/** User info. Is it overkill to have a service for only refreshing ``UserInfo``? */
-public protocol UserService: AnyObject {
-    
-    var user: UserData { get }
-    
-    func refreshUserInfo() async throws
-}
-
-
-internal class UserServiceImpl: UserService {
+/// User info. Is it overkill to have a service for only refreshing `UserInfo`
+public actor UserService {
 
     public
     private(set)
