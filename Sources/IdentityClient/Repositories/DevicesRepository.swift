@@ -8,7 +8,7 @@
 import Foundation
 import NetworkUtilities
 
-public class DevicesRepositoryImpl: DevicesRepository {
+final public class DevicesRepositoryImpl: DevicesRepository {
 
     let configuration : IdentityConfig
     let requestProcessor : RequestProcessor
@@ -117,7 +117,7 @@ public extension DevicesRepositoryImpl {
 public extension DevicesRepositoryImpl {
     
     func trust(deviceId: String, bySwappingWith otherDeviceId: String?) async throws {
-        struct SwapDeviceRequest: Codable {
+        struct SwapDeviceRequest: Codable, Sendable {
             let swapDeviceId: String?
         }
         

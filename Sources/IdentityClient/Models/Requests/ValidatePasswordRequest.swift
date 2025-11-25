@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct ValidatePasswordRequest: Codable
+public struct ValidatePasswordRequest: Codable, Sendable
 {
     /// <summary>
     /// A token representing the user id.

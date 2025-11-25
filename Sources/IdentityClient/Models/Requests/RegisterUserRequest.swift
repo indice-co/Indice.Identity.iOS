@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct RegisterUserRequest: Codable {
+public struct RegisterUserRequest: Codable, Sendable {
     public let firstName: String?
     public let lastName: String?
     public let userName: String

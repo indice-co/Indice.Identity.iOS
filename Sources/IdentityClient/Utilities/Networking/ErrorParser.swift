@@ -7,10 +7,10 @@
 
 import Foundation
 
-public struct ErrorParser {
-    let map: (Swift.Error) -> IdentityClient.Error.APIError?
+public struct ErrorParser: Sendable {
+    let map: @Sendable (Swift.Error) -> IdentityClient.Error.APIError?
     
-    public init(map: @escaping (Swift.Error) -> IdentityClient.Error.APIError?) {
+    public init(map: @Sendable @escaping (Swift.Error) -> IdentityClient.Error.APIError?) {
         self.map = map
     }
 }

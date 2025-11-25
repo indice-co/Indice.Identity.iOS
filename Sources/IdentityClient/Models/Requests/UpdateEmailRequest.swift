@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct UpdateEmailRequest: Codable {
+public struct UpdateEmailRequest: Codable, Sendable {
     public let email: String
     public let returnUrl: String?
     

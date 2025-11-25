@@ -8,7 +8,7 @@
 import Foundation
 import NetworkUtilities
 
-class AuthRepositoryImpl: AuthRepository {
+final class AuthRepositoryImpl: AuthRepository {
     
     private let configuration: IdentityConfig
     private let requestProcessor: RequestProcessor

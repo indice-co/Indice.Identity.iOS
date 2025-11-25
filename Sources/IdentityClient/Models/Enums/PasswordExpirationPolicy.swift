@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum PasswordExpirationPolicy: String, Codable, CaseIterable {
+public enum PasswordExpirationPolicy: String, Codable, Sendable, CaseIterable {
     case nextLogin = "NextLogin"
     case monthly = "Monthly"
     case quarterly = "Quarterly"

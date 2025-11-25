@@ -27,11 +27,15 @@ import Foundation
     - Type the key name once
     - The **.value** syntax, is faster to write as you omit the class type!!
  */
-public struct ValueStorageKey: Sendable {
+public struct ValueStorageKey: Sendable, ExpressibleByStringLiteral {
     public let name: String
     
     public init(name: String) {
         self.name = name
+    }
+    
+    public init(stringLiteral value: String) {
+        self.name = value
     }
 }
 
@@ -41,7 +45,7 @@ public struct ValueStorageKey: Sendable {
 
  UseDefaults conform to this protocol, and are used as the default implementation within the library.
  */
-public protocol ValueStorage: AnyObject {
+public protocol ValueStorage: AnyObject, Sendable {
     typealias Key = ValueStorageKey
     
     func store(value: Any, forKey: Key)

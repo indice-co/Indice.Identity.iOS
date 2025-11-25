@@ -12,7 +12,7 @@ import Foundation
  
   Each type carries parameters relevant to their grantType value.
  */
-public protocol OAuth2Grant {
+public protocol OAuth2Grant: Sendable {
     typealias Params = [String: Any]
     
     /** The grant flow type name */
@@ -95,7 +95,7 @@ internal extension OAuth2Grant {
 /** A wrapper over an ordinary `OAuth2Grant`.
     It's `params` getter will return its original ones and the `authorization_details`.
  */
-private struct OAuthParamsWrapper<Parent: OAuth2Grant>: OAuth2Grant {
+private struct OAuthParamsWrapper<Parent: OAuth2Grant>: @unchecked Sendable, OAuth2Grant {
     static var grantType: String { Parent.grantType }
     
     let parent: Parent

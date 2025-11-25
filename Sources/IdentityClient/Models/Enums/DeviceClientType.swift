@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum DeviceClientType: String, Codable {
+public enum DeviceClientType: String, Codable, Sendable {
     case browser = "Browser"
     case native = "Native"
 }

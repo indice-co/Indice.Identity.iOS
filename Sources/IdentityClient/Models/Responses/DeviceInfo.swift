@@ -7,9 +7,9 @@
 
 import Foundation
 
-public struct DeviceInfo: Codable, Equatable {
+public struct DeviceInfo: Codable, Sendable, Equatable {
     
-    public var deviceId: String?
+    public var deviceId: String
     public var name: String?
     public var platform: DevicePlatform?
     public var isPushNotificationsEnabled: Bool?

@@ -8,7 +8,7 @@
 import Foundation
 import NetworkUtilities
 
-class UserInfoRepositoryImpl: UserInfoRepository {
+final class UserInfoRepositoryImpl: UserInfoRepository {
     
     private let configuration: IdentityConfig
     private let requestProcessor: RequestProcessor

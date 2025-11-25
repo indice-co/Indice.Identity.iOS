@@ -7,6 +7,6 @@
 
 import Foundation
 
-public struct UsernameStateInfo: Decodable {
+public struct UsernameStateInfo: Decodable, Sendable {
     public let result: UsernameState
 }

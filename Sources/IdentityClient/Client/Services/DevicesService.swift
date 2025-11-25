@@ -9,149 +9,123 @@ import Foundation
 import Combine
 
 
-fileprivate extension ValueStorageKey {
-    static let devicePinKey   = ValueStorageKey(name: "device_registration_device_pin" )
-    static let fingerprintKey = ValueStorageKey(name: "device_registration_fingerprint")
+private struct AuthRegistrationContext: Codable {
+    typealias Context = QuickLoginStatus.Context
+    
+    let deviceId: String
+    let context: Context
+    
+    private init(deviceId: String, context: Context) {
+        self.deviceId = deviceId
+        self.context = context
+    }
+    
+    @discardableResult
+    static func clear(_ context: Context, on storage: SecureStorage) -> Bool {
+        storage.remove(key: context.storageKey)
+    }
+    
+    @discardableResult
+    static func store(
+        deviceId: String,
+        context: Context,
+        on storage: SecureStorage
+    ) -> Bool {
+        let item = Self(deviceId: deviceId, context: context)
+        let data = try? JSONEncoder().encode(item)
+        
+        guard let data else { return false }
+        
+        storage.store(key: context.storageKey, data: data)
+        
+        return true
+    }
 }
 
-public class DevicesData {
+public extension ValueStorageKey {
+    static let deviceAuthContextFingerprint: ValueStorageKey = "device_auth_context_fingerprint"
+    static let deviceAuthContextDevicePin  : ValueStorageKey = "device_auth_context_devicePin"
+}
+
+public class DevicesData: ObservableObject, @unchecked Sendable {
     @Published
-    public internal(set)
+    public private(set)
     var userDevices: [DeviceInfo]? = nil
     
     @Published
-    public internal(set)
+    public private(set)
     var thisDevice: DeviceInfo? = nil
+    
+    func updateWith(userDevices: [DeviceInfo]?, thisDeviceId: String?) {
+        self.userDevices = userDevices
+        self.thisDevice = userDevices?.first(where: {
+            $0.deviceId == thisDeviceId
+        })
+    }
 }
 
 
 
-public class QuickLoginStatus: ObservableObject {
+final public class QuickLoginStatus: ObservableObject, @unchecked Sendable {
+    
+    public enum Context: String, Codable {
+        case devicePin, fingerprint
+        
+        internal var storageKey: ValueStorageKey {
+            switch self {
+            case .devicePin  : .deviceAuthContextDevicePin
+            case .fingerprint: .deviceAuthContextFingerprint
+            }
+        }
+    }
+    
+    let storage: SecureStorage
+    
+    init(storage: SecureStorage) {
+        self.storage = storage
+    }
     
     @Published
-    public internal(set)
-    var hasDevicePin: Bool = false
+    internal
+    var thisDevice: DeviceInfo? = nil
     
-    @Published
-    public internal(set)
-    var hasFingerprint: Bool = false
+    public var hasDevicePin: Bool {
+        thisDevice?.supportsPinLogin ?? false
+    }
     
-    @Published
-    public internal(set)
-    var hasQuickLogin: Bool = false
-
+    public var hasFingerprint: Bool {
+        thisDevice?.supportsFingerprintLogin ?? false
+    }
+    
+    public var hasQuickLogin: Bool {
+        hasFingerprint || hasDevicePin
+    }
+    
+    public func hasRegistered(for context: Context) -> Bool {
+        storage.read(key: context.storageKey).map { data in
+            (try? JSONDecoder().decode(
+                AuthRegistrationContext.self,
+                from: data))?
+                    .context == context
+        } ?? false
+    }
 }
 
+/// Manages the users devices. Provides info as bindable objects that the relevant UI can use.
+final public actor DevicesService: Sendable {
 
-/**
- Manages the users devices. Provides info as bindable objects that the relevant UI can use.
- */
-public protocol DevicesService: AnyObject {
-    
-    var devicesInfo: DevicesData { get }
-    
-    var quickLoginStatus: QuickLoginStatus { get }
-    
-    var ids: ThisDeviceIds { get }
-    
-    
-    func refreshDevices() async throws
-    
-    /** Register or update an existing registration of the current device. */
-    func updateThisDeviceRegistration(pnsHandle: String?, tags: [String]?) async throws
-    
-    /** Delete a devices from the user's registered devices list. */
-    func delete(deviceId: String) async throws
-
-    
-    /**
-     Register or update a device, to be able to perform a **device\_authentication** grant with **pin** mode
-     This method returns a **lambda** that, provided with on otp, completes the device pin registration.
-     ```
-     
-     let pin: String = makePin()
-     let continuation = try await registerDevice(withPin: pin)
-     
-     // If success show otp input
-     try await continuation(otpResult)
-     
-     ```
-     It is not necessary to call the continuation with an OtpResult.aborted result but it is recommended.
-     */
-    func registerDevice(withPin pin: String) async throws -> (CallbackType.OtpResult) async throws -> ()
-    
-    /**
-     Register or update a device, to be able to perform a **device\_authentication** grant with **pin** mode
-     This method returns a **lambda** that, provided with on otp, completes the device pin registration.
-     ```
-     
-     let pin: String = makePin()
-     let continuation = try await registerDevice(withPin: pin)
-     
-     // If success show otp input
-     try await continuation(otpResult)
-     
-     ```
-     It is not necessary to call the continuation with an OtpResult.aborted result but it is recommended.
-     */
-    func registerDevice(withPin pin: String, otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> ()
-
-    
-    /**
-     Register or update a device, to be able to perform a **device\_authentication** grant with **fingerprint** mode
-     This method returns a **lambda** that, provided with on otp, completes the device fingerprint registration.
-     ```
-     
-     let continuation = try await registerDeviceFingerprint()
-     // If success show otp input
-     try await continuation(otpResult)
-     
-     ```
-     It is not necessary to call the continuation with an OtpResult.aborted result but it is recommended.
-     */
-    func registerDeviceFingerprint() async throws -> (CallbackType.OtpResult) async throws -> ()
-
-    
-    /**
-     Register or update a device, to be able to perform a **device\_authentication** grant with **fingerprint** mode
-     This method returns a **lambda** that, provided with on otp, completes the device fingerprint registration.
-     ```
-     
-     let continuation = try await registerDeviceFingerprint()
-     // If success show otp input
-     try await continuation(otpResult)
-     
-     ```
-     It is not necessary to call the continuation with an OtpResult.aborted result but it is recommended.
-     */
-    func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> ()
-    
-    /** Remove a device pin registration */
-    func removeRegistrationDevicePin() async
-    
-    /** Remove a fingerprint registration */
-    func removeRegistrationFingerprint() async
-    
-    /** Trigger enable current device's trust status */
-    func enableDeviceTrust(deviceSelection: CallbackType.DeviceSelection) async throws
-    
-    /** Remove current device's trust status */
-    func removeDeviceTrust() async throws
-    
-}
-
-
-internal class DevicesServiceImpl: DevicesService {
-
+    nonisolated
     public let devicesInfo: DevicesData = .init()
     
-    public let quickLoginStatus: QuickLoginStatus = .init()
+    nonisolated
+    public let quickLoginStatus: QuickLoginStatus
     
     private let identityOptions      : IdentityClientOptions
-    private let serviceProvider      : ServiceProvider
+    private let serviceProvider      : ServiceHub
     private let thisDeviceRepository : ThisDeviceRepository
     private let devicesRepository    : DevicesRepository
     private let valueStorage         : ValueStorage
+    private let secureStorage        : SecureStorage
     private let client               : Client
 
     
@@ -162,10 +136,11 @@ internal class DevicesServiceImpl: DevicesService {
     }
     
     init(identityOptions: IdentityClientOptions,
-         serviceProvider: ServiceProvider,
+         serviceProvider: ServiceHub,
          thisDeviceRepository: ThisDeviceRepository,
          devicesRepository: DevicesRepository,
          valueStorage: ValueStorage,
+         secureStorage: SecureStorage,
          client: Client) {
         
         self.identityOptions = identityOptions
@@ -173,52 +148,24 @@ internal class DevicesServiceImpl: DevicesService {
         self.thisDeviceRepository = thisDeviceRepository
         self.devicesRepository = devicesRepository
         self.valueStorage = valueStorage
+        self.secureStorage = secureStorage
         self.client = client
-        
-        self.devicesInfo.$userDevices
-            .sink { [weak self] devices in
-                guard let self = self else { return }
-                let deviceId = self.thisDeviceRepository
-                    .ids
-                    .device
-                
-                self.devicesInfo.thisDevice = devices?.first(where: {
-                    $0.deviceId == deviceId
-                })
-            }
-            .store(in: &cancellables)
-        
-        
-        self.quickLoginStatus.hasDevicePin   = valueStorage.readBool(forKey: .devicePinKey)   ?? false
-        self.quickLoginStatus.hasFingerprint = valueStorage.readBool(forKey: .fingerprintKey) ?? false
-        
-        self.quickLoginStatus
-            .$hasFingerprint
-            .sink { [weak self] newValue in
-                self?.valueStorage.store(value: newValue, forKey: .fingerprintKey)
-            }.store(in: &cancellables)
-        
-        self.quickLoginStatus.$hasDevicePin
-            .sink { [weak self] newValue in
-                self?.valueStorage.store(value: newValue, forKey: .devicePinKey)
-            }.store(in: &cancellables)
-        
-        self.quickLoginStatus.$hasFingerprint
-            .combineLatest(self.quickLoginStatus.$hasDevicePin)
-            .map { $0 || $1 }
-            .sink(receiveValue: { [weak self] result in
-                self?.quickLoginStatus.hasQuickLogin = result
-            })
-            .store(in: &cancellables)
+        self.quickLoginStatus = .init(storage: secureStorage)
+
+        self.devicesInfo
+            .$thisDevice
+            .assign(to: &quickLoginStatus.$thisDevice)
     }
 
-    
+    /// Refresh the list of the user's devices
     public func refreshDevices() async throws {
         try await updateFetchDeviceList()
     }
     
     
-    public func updateThisDeviceRegistration(pnsHandle: String? = nil, tags: [String]? = nil) async throws {
+    /// Register or update an existing registration of the current device.
+    @discardableResult
+    public func updateThisDeviceRegistration(pnsHandle: String? = nil, tags: [String]? = nil) async throws -> DeviceInfo {
         let isRegistered: Bool = try await {
             if devicesInfo.thisDevice == nil {
                 try await updateFetchDeviceList()
@@ -240,14 +187,19 @@ internal class DevicesServiceImpl: DevicesService {
         }
         
         try await updateFetchDeviceList()
+        
+        return devicesInfo.thisDevice!
     }
     
+    /// Delete a devices from the user's registered devices list.
     public func delete(deviceId: String) async throws {
         try await devicesRepository.delete(deviceId: deviceId)
         
-        devicesInfo.userDevices = devicesInfo.userDevices?.filter {
-            $0.deviceId == deviceId
-        }
+        devicesInfo.updateWith(
+            userDevices: devicesInfo
+                .userDevices?
+                .filter { $0.deviceId == deviceId },
+            thisDeviceId: thisDeviceRepository.ids.device)
     }
 
     
@@ -257,13 +209,24 @@ internal class DevicesServiceImpl: DevicesService {
 // MARK: - Authorize device
 
 
-extension DevicesServiceImpl {
+extension DevicesService {
     
-    public func registerDevice(withPin pin: String) async throws -> (CallbackType.OtpResult) async throws -> () {
-        try await registerDevice(withPin: pin, otpChannel: nil)
-    }
     
-    public func registerDevice(withPin pin: String, otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> () {
+    
+    /// Register or update a device, to be able to perform a **device\_authentication** grant with **pin** mode
+    /// This method returns a **lambda** that, provided with on otp, completes the device pin registration.
+    /// ```swift
+    ///
+    /// let pin: String = /* receive pin */
+    /// let continuation = try await registerDevice(withPin: pin)
+    ///
+    /// let otpValue = /* receive otp */
+    /// try await continuation(.submit(value: otpValue)
+    ///
+    /// ```
+    /// It is not necessary to call the continuation with an OtpResult.aborted result but it is recommended.
+     
+    public func registerDevice(withPin pin: String, otpChannel: TotpDeliveryChannel? = nil) async throws -> @Sendable (CallbackType.OtpResult) async throws -> () {
         do {
             _ = CryptoUtils.deleteKeyPair(locked: false, tagged: .devicePin)
             let keys = try CryptoUtils.createKeyPair(locked: false, tagged: .devicePin)
@@ -287,7 +250,8 @@ extension DevicesServiceImpl {
             return { [weak self] otpResult in
                 guard let self = self else { return }
                 
-                let securityDataHolder = self.serviceProvider(\.authorizationService) as? AuthorizationSecurityDataHolder
+                
+                let securityDataHolder = self.serviceProvider.authorizationService
                 
                 do {
                     let registration = try await devicesRepository.complete(registrationRequest: .pin(code: response.challenge,
@@ -300,27 +264,39 @@ extension DevicesServiceImpl {
                     
                     try await self.updateDeviceWith(deviceId: deviceIds.device)
                     
-                    self.thisDeviceRepository.update(registrationId: registration.registrationId)
-                    self.quickLoginStatus.hasDevicePin = true
-                    securityDataHolder?.signingData = .init(key: keys.private)
+                    self.thisDeviceRepository.update(
+                        registrationId: registration.registrationId)
+                    
+                    await securityDataHolder.updateSecurityData(.init(key: keys.private))
+                    
+                    AuthRegistrationContext.store(
+                        deviceId: deviceIds.device,
+                        context: .devicePin,
+                        on: self.secureStorage)
                 } catch {
-                    securityDataHolder?.signingData = nil
-                    self.quickLoginStatus.hasDevicePin = false
+                    await securityDataHolder.updateSecurityData(nil)
+                    AuthRegistrationContext.clear(.devicePin, on: secureStorage)
                     throw error
                 }
             }
         } catch {
-            quickLoginStatus.hasDevicePin = false
+            AuthRegistrationContext.clear(.devicePin, on: secureStorage)
             throw error
         }
     }
     
     
-    public func registerDeviceFingerprint() async throws -> (CallbackType.OtpResult) async throws -> () {
-        try await registerDeviceFingerprint(otpChannel: nil)
-    }
-    
-    public func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel?) async throws -> (CallbackType.OtpResult) async throws -> () {
+    /// Register or update a device, to be able to perform a **device\_authentication** grant with **fingerprint** mode
+    /// This method returns a **lambda** that, provided with on otp, completes the device fingerprint registration.
+    /// ```swift
+    ///
+    /// let continuation = try await registerDeviceFingerprint()
+    ///
+    /// let otpValue = /* receive otp */
+    /// try await continuation(.submit(value: otpValue)
+    /// ```
+    /// It is not necessary to call the continuation with an OtpResult.aborted result but it is recommended.
+    public func registerDeviceFingerprint(otpChannel: TotpDeliveryChannel? = nil) async throws -> @Sendable (CallbackType.OtpResult) async throws -> () {
         do {
             _ = CryptoUtils.deleteKeyPair(locked: true, tagged: .fingerprint)
             let keys = try CryptoUtils.createKeyPair(locked: true, tagged: .fingerprint)
@@ -343,42 +319,51 @@ extension DevicesServiceImpl {
             return { [weak self] otpResult in
                 guard let self = self else { return }
                 do {
-                    let registration = try await self.devicesRepository.complete(registrationRequest: .biometric(code: response.challenge,
-                                                                                                                codeVerifier: verifier,
-                                                                                                                codeSignature: signedVerifier,
-                                                                                                                deviceIds: deviceIds,
-                                                                                                                deviceInfo: deviceInfo,
-                                                                                                                publicPem: devicePem,
-                                                                                                                otp: otpResult.otpValue))
+                    let registration = try await self.devicesRepository.complete(
+                        registrationRequest: .biometric(
+                            code: response.challenge,
+                            codeVerifier: verifier,
+                            codeSignature: signedVerifier,
+                            deviceIds: deviceIds,
+                            deviceInfo: deviceInfo,
+                            publicPem: devicePem,
+                            otp: otpResult.otpValue))
                     
                     try await self.updateDeviceWith(deviceId: deviceIds.device)
                     
                     
                     self.thisDeviceRepository.update(registrationId: registration.registrationId)
-                    self.quickLoginStatus.hasFingerprint = true
+                    // await self.quickLoginStatus.update(hasFingerprint: true)
+                    AuthRegistrationContext.store(
+                        deviceId: deviceIds.device,
+                        context: .fingerprint,
+                        on: self.secureStorage)
                     
                 } catch {
-                    self.quickLoginStatus.hasFingerprint = false
+                    AuthRegistrationContext.clear(.fingerprint, on: secureStorage)
                     throw error
                 }
             }
         } catch {
-            quickLoginStatus.hasFingerprint = false
+            AuthRegistrationContext.clear(.fingerprint, on: secureStorage)
             throw error
         }
     }
     
     
+    /// Remove a device pin registration
     public func removeRegistrationDevicePin() async {
         CryptoUtils.deleteKeyPair(locked: false, tagged: .devicePin)
-        quickLoginStatus.hasDevicePin = false
+        // await quickLoginStatus.update(hasDevicePin: false)
     }
  
+    /// Remove a fingerprint registration
     public func removeRegistrationFingerprint() async {
         CryptoUtils.deleteKeyPair(locked: true, tagged: .fingerprint)
-        quickLoginStatus.hasFingerprint = false
+        // await quickLoginStatus.update(hasFingerprint: false)
     }
  
+    /// Trigger enable current device's trust status
     public func enableDeviceTrust(deviceSelection: CallbackType.DeviceSelection) async throws {
         let ids = thisDeviceRepository.ids
         
@@ -408,13 +393,16 @@ extension DevicesServiceImpl {
             return nil
         }()
         
-        try await devicesRepository.trust(deviceId: ids.device, bySwappingWith: swapDeviceId)
+        try await devicesRepository.trust(
+            deviceId: ids.device,
+            bySwappingWith: swapDeviceId)
         
         try await updateDeviceWith(deviceId: ids.device)
         
         if let swapDeviceId { try await updateDeviceWith(deviceId: swapDeviceId) }
     }
     
+    /// Remove current device's trust status
     public func removeDeviceTrust() async throws {
         let deviceId = thisDeviceRepository.ids.device
         
@@ -427,9 +415,15 @@ extension DevicesServiceImpl {
 
 // MARK: Private helpers
 
-extension DevicesServiceImpl {
+extension DevicesService {
     func updateFetchDeviceList() async throws {
-        devicesInfo.userDevices = try await devicesRepository.devices().items
+        devicesInfo.updateWith(
+            userDevices: try await devicesRepository
+                .devices()
+                .items,
+            thisDeviceId: thisDeviceRepository
+                .ids
+                .device)
     }
 
     func updateDeviceWith(deviceId: String) async throws {
@@ -446,6 +440,10 @@ extension DevicesServiceImpl {
             deviceList.insert(newDevice, at: 0)
         }
 
-        devicesInfo.userDevices = deviceList
+        devicesInfo.updateWith(
+            userDevices: deviceList,
+            thisDeviceId: thisDeviceRepository
+                .ids
+                .device)
     }
 }

@@ -14,7 +14,7 @@ private extension ValueStorageKey {
 
 
 // TODO: See if the INFO needs be a published/bindable item.
-internal class ThisDeviceRepositoryImpl: ThisDeviceRepository {
+final internal class ThisDeviceRepositoryImpl: ThisDeviceRepository {
     private let currentDeviceProvider: CurrentDeviceInfoProvider
     private let secureStorage: SecureStorage
     private let storage: ValueStorage
@@ -41,14 +41,15 @@ internal class ThisDeviceRepositoryImpl: ThisDeviceRepository {
     func resetIds() {
         storage.clearValue(forKey: .deviceIdKey)
         storage.clearValue(forKey: .registrationIdKey)
+        _ = secureStorage.remove(key: .registrationIdKey)
     }
     
     @discardableResult
     func update(registrationId: String?) -> Bool {
         return if let registrationId {
-            secureStorage.store(key: ValueStorageKey.registrationIdKey.name, data: Data(registrationId.utf8))
+            secureStorage.store(key: .registrationIdKey, data: Data(registrationId.utf8))
         } else {
-            secureStorage.remove(key: ValueStorageKey.registrationIdKey.name)
+            secureStorage.remove(key: .registrationIdKey)
         }
     }
     
@@ -67,7 +68,7 @@ internal class ThisDeviceRepositoryImpl: ThisDeviceRepository {
     }
     
     private func registrationIdGetter() -> String? {
-        guard let data = secureStorage.read(key: ValueStorageKey.registrationIdKey.name) else {
+        guard let data = secureStorage.read(key: .registrationIdKey) else {
             return nil
         }
         

@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum TrustDeviceMode: String, Codable, CaseIterable {
+public enum TrustDeviceMode: String, Codable, Sendable, CaseIterable {
     case biometric = "fingerprint"
     case pin = "pin"
 }

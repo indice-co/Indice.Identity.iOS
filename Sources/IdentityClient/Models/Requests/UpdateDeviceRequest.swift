@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct UpdateDeviceRequest: Codable {   
+public struct UpdateDeviceRequest: Codable, Sendable {   
     public var name: String
     public var isPushNotificationsEnabled: Bool?
     public var tags: [String]?

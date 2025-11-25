@@ -7,7 +7,9 @@
 
 import Foundation
 
-public protocol AuthRepository: AnyObject {
+public protocol Repository: AnyObject, Sendable { }
+
+public protocol AuthRepository: Repository {
     func authorize(grant: OAuth2Grant) async throws -> TokenResponse
     func revoke(token: TokenType, withBasicAuth: String) async throws
 }
@@ -15,7 +17,7 @@ public protocol AuthRepository: AnyObject {
 
 // MARK: -
 
-public protocol DevicesRepository: AnyObject {
+public protocol DevicesRepository: Repository {
     
     // MARK: Auth
     func authorize(authRequest: DeviceAuthentication.AuthorizationRequest) async throws -> DeviceAuthentication.ChallengeResponse
@@ -36,7 +38,7 @@ public protocol DevicesRepository: AnyObject {
 
 // MARK: -
 
-public protocol MyAccountRepository: AnyObject {
+public protocol MyAccountRepository: Repository {
     func register(request: RegisterUserRequest) async throws
     
     func verify(password: ValidatePasswordRequest) async throws -> CredentialsValidationInfo
@@ -53,25 +55,25 @@ public protocol MyAccountRepository: AnyObject {
 }
 
 
-public protocol UserInfoRepository: AnyObject {
+public protocol UserInfoRepository: Repository {
     func userInfo() async throws -> UserInfo
 }
 
 
 // MARK: -
 
-public struct ThisDeviceIds {
+public struct ThisDeviceIds: Sendable {
     public var device       : String
     public var registration : String?
 }
 
-public struct ThisDeviceInfo {
+public struct ThisDeviceInfo: Sendable {
     public var name      : String
     public var model     : String
     public var osVersion : String
 }
 
-public protocol ThisDeviceRepository: AnyObject {
+public protocol ThisDeviceRepository: Repository {
     typealias Ids  = ThisDeviceIds
     typealias Info = ThisDeviceInfo
     

@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct UserInfo: Codable {
+public struct UserInfo: Codable, Sendable {
     public let sub: String
     public let name: String?
     public let given_name: String?
@@ -24,4 +24,5 @@ public struct UserInfo: Codable {
     public var phone_number: String?
     public var phone_number_verified: Bool?
     public var max_devices_count: String?
+    public var password_expired: Bool?
 }

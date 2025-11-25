@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class SecureStorage {
+final public class SecureStorage: Sendable {
 
     private let service : String
     private let purgeTag: String
@@ -20,10 +20,12 @@ public class SecureStorage {
         self.purgeTag = purgeTag
     }
     
+    @discardableResult
     public func store(key: ValueStorageKey, data: Data) -> Bool {
         store(key: key.name, data: data)
     }
     
+    @discardableResult
     public func store(key: String, data: Data) -> Bool {
         let query = [
             kSecClass       .string: kSecClassGenericPassword,
@@ -64,10 +66,12 @@ public class SecureStorage {
         return data
     }
     
+    @discardableResult
     public func remove(key: ValueStorageKey) -> Bool {
         remove(key: key.name)
     }
     
+    @discardableResult
     public func remove(key: String) -> Bool {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -79,6 +83,7 @@ public class SecureStorage {
         return status == errSecSuccess || status == errSecItemNotFound
     }
     
+    @discardableResult
     public func purgeStorage() -> Bool {
         let query: [String: Any] = [
             kSecClass       .string: kSecClassGenericPassword,

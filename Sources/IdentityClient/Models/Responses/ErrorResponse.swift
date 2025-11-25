@@ -9,7 +9,7 @@
 import Foundation
 
 /** A basic error model that is returned on an auth request. */
-public struct ErrorResponse: Codable {
+public struct ErrorResponse: Codable, Sendable {
     public let error: String
     public let description: String?
 }

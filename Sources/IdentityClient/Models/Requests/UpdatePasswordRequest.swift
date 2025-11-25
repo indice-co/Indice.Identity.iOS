@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct UpdatePasswordRequest: Codable {
+public struct UpdatePasswordRequest: Codable, Sendable {
     public let oldPassword: String
     public let newPassword: String
     public let newPasswordConfirmation: String

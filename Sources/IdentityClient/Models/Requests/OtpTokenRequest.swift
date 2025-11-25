@@ -7,6 +7,6 @@
 
 import Foundation
 
-public struct OtpTokenRequest: Codable {
+public struct OtpTokenRequest: Codable, Sendable {
     let token: String
 }

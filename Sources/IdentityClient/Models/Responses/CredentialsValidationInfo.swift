@@ -7,6 +7,6 @@
 
 import Foundation
 
-public struct CredentialsValidationInfo: Decodable {
+public struct CredentialsValidationInfo: Decodable, Sendable {
     let passwordRules: [PasswordRuleInfo]?
 }

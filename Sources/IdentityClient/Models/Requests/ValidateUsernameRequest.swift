@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct ValidateUsernameRequest: Codable
+public struct ValidateUsernameRequest: Codable, Sendable
 {
     /// <summary>
     /// The username.

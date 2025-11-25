@@ -5,7 +5,9 @@
 //  Created by Nikolas Konstantakopoulos on 31/3/23.
 //
 
+@preconcurrency
 import Foundation
+
 import CryptoKit
 
 internal struct SecKeyTags {
@@ -19,7 +21,7 @@ internal extension CryptoUtils.TagData {
 }
 
 
-protocol KeyPair {
+protocol KeyPair: Sendable {
     var `public`  : SecKey { get }
     var `private` : SecKey { get }
 }
@@ -28,7 +30,7 @@ final class CryptoUtils {
     
     typealias TagData = Data
     
-    private struct InnerKeyPair : KeyPair  {
+    private struct InnerKeyPair: KeyPair  {
         let `public`  : SecKey
         let `private` : SecKey
     }

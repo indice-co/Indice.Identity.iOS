@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct CreateDeviceRequest: Codable {
+public struct CreateDeviceRequest: Codable, Sendable {
     public var deviceId: String
     public var pnsHandle: String?
     public var name: String
