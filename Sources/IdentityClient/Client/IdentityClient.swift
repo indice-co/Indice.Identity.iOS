@@ -12,10 +12,17 @@ import Foundation
  The IdentityClient! Encapsulates and manages all the services provided by the Indice.AspNet Identity library that are relevant to a client application.
  One instance should be created.
  */
-final public class IdentityClient: @unchecked Sendable {
+final public class IdentityClient: Sendable {
     public typealias Error   = IdentityClientErrors
     public typealias Options = IdentityClientOptions
     public typealias Configuration = IdentityConfig
+    
+    public typealias Authorization = AuthorizationService
+    public typealias User = UserService
+    public typealias Devices = DevicesService
+    public typealias Account = AccountService
+    public typealias UserRegistration = UserRegistrationService
+    
 
     internal let client                    : Client
     internal let configuration             : IdentityConfig
@@ -25,109 +32,40 @@ final public class IdentityClient: @unchecked Sendable {
     private  let currentDeviceInfoProvider : CurrentDeviceInfoProvider
     private  let options                   : IdentityClient.Options
     
-    public let serviceHub: ServiceHub
+    
+    public var authService         : AuthorizationService    { serviceHub.authorizationService }
+    public var userService         : UserService             { serviceHub.userService }
+    public var devicesService      : DevicesService          { serviceHub.devicesService }
+    public var accountService      : AccountService          { serviceHub.accountService }
+    public var registrationService : UserRegistrationService { serviceHub.registrationService }
+    
+    private let serviceHub: ServiceHub
+    
+    public var requestProcessor: RequestProcessor { serviceHub.processor.processor }
     
     public var tokens: TokenStorageAccessor { get { tokenStorage } }
-
-//    private let networkOptionsBuilder: @Sendable (IdentityClient) -> NetworkOptions
-//    private lazy var networkOptions: NetworkOptions = networkOptionsBuilder(self)
-//    
-//    private var serviceProvider: ServiceProvider!
-//    
-//    
-//    private(set)
-//    lazy var requestProcessor: any RequestProcessor = {
-//        networkOptions.processor()
-//    }()
-//    
-//    private(set)
-//    lazy var networkClient: RequestProcessor = {
-//        RequestProcessorWrapper(processor: requestProcessor,
-//                                tokenAccessor: tokenStorage)
-//    }()
     
-//    private(set)
-//    lazy var errorParser: ErrorParser = networkOptions.errorParser
-//    
-//    private lazy
-//    var repositories: Repositories = {
-//       Repositories(repositoryFactory: DefaultRepositoryFactory.self,
-//                    configuration: configuration,
-//                    requestProcessor: networkClient,
-//                    valueStorage: valueStorage,
-//                    secureStorage: secureStorage,
-//                    errorParser: errorParser,
-//                    currentDeviceInfoProvider: currentDeviceInfoProvider)
-//    }()
-//    
-//    // MARK: - Services
-//    
-//    public
-//    private(set) lazy
-//    var authorizationService: AuthorizationService = {
-//        AuthorizationServiceImpl(authRepository: repositories.authRepository,
-//                                 accountRepository: repositories.accountRepository,
-//                                 deviceRepository: repositories.devicesRepository,
-//                                 thisDeviceRepository: repositories.thisDeviceRepository,
-//                                 tokenStorage: tokenStorage,
-//                                 client: client,
-//                                 configuration: configuration)
-//    }()
-//
-//    public
-//    private(set) lazy
-//    var userService: UserService = {
-//        UserServiceImpl(userRepository: repositories.userRepository)
-//    }()
-//    
-//    public
-//    private(set) lazy
-//    var accountService: AccountService = {
-//        AccountServiceImpl(accountRepository: repositories.accountRepository,
-//                           userService: userService)
-//    }()
-//    
-//    public
-//    private(set) lazy
-//    var devicesService: DevicesService = {
-//        DevicesServiceImpl(identityOptions: options,
-//                           serviceProvider: serviceProvider,
-//                           thisDeviceRepository: repositories.thisDeviceRepository,
-//                           devicesRepository: repositories.devicesRepository,
-//                           valueStorage: valueStorage,
-//                           client: client)
-//    }()
-//    
-//    
-//    public
-//    private(set)
-//    lazy var userRegistrationService: UserRegistrationService = {
-//        UserRegistrationServiceImpl(accountRepository: repositories.accountRepository,
-//                                    errorParser: errorParser)
-//    }()
-//    
-//    
+    
     // MARK: - Init
-    public init(client: Client,
-                configuration: IdentityConfig,
-                options: IdentityClient.Options = .init(maxTrustedDevicesCount: 1),
+    public init(client          : Client,
+                configuration   : IdentityConfig,
+                options         : IdentityClient.Options = .init(maxTrustedDevicesCount: 1),
                 currentDeviceInfoProvider: CurrentDeviceInfoProvider,
-                valueStorage: ValueStorage = UserDefaults.standard,
-                secureStorage: SecureStorage = SecureStorage(),
-                tokenStorage: TokenStorage = .ephemeral,
-                networkOptionsBuilder: @Sendable @escaping () -> NetworkOptions) {
-        self.client = client
-        self.configuration = configuration
+                valueStorage    : ValueStorage = UserDefaults.standard,
+                secureStorage   : SecureStorage = SecureStorage(),
+                tokenStorage    : TokenStorage = .ephemeral,
+                networkOptions  : NetworkOptions) {
+        self.client         = client
+        self.configuration  = configuration
+        self.valueStorage   = valueStorage
+        self.secureStorage  = secureStorage
+        self.tokenStorage   = tokenStorage
+        self.options        = options
         self.currentDeviceInfoProvider = currentDeviceInfoProvider
-        self.valueStorage = valueStorage
-        self.secureStorage = secureStorage
-        self.tokenStorage = tokenStorage
-        self.options = options
         
-        let built = networkOptionsBuilder()
         
         self.serviceHub = .init(
-            requestProcessor: built.processor(),
+            processorBuilder: networkOptions.processorBuilder,
             configuration: configuration,
             options: options,
             storage: valueStorage,
@@ -135,9 +73,7 @@ final public class IdentityClient: @unchecked Sendable {
             deviceInfo: currentDeviceInfoProvider,
             tokenStorage: tokenStorage,
             client: client,
-            errorParser: built.errorParser)
-        // self.networkOptionsBuilder = networkOptionsBuilder
-        // self.serviceProvider = .init { [weak self] in self }
+            errorParser: networkOptions.errorParser)
     }
 }
 

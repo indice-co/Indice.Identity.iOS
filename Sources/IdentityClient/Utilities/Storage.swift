@@ -8,27 +8,37 @@
 import Foundation
 
 /** A token storage that keeps its values only as long as the instance exists. */
-public actor EphemeralTokenStorage: TokenStorage {
+final public class EphemeralTokenStorage: TokenStorage, @unchecked Sendable {
     
-    public private(set) var idToken: String?
-    public private(set) var refreshToken: TokenType?
-    public private(set) var accessToken: TokenType?
-    public private(set) var tokenType: String?
+    private let lock: CriticalSectionLock = .init()
     
-    public private(set) var authorization: String?
+    public var idToken: String? {
+        lock.withLock { response?.id_token }
+    }
+    public var refreshToken: TokenType? {
+        lock.withLock { (response?.refresh_token)
+            .map(TokenType.refreshToken) }
+    }
+    public var accessToken: TokenType? {
+        lock.withLock { (response?.access_token)
+            .map(TokenType.accessToken) }
+    }
+    public var tokenType: String? {
+        lock.withLock { response?.token_type }
+    }
+        
+    private var response: TokenResponse?
     
     public func parse(_ response: TokenResponse) {
-        idToken = response.id_token
-        tokenType = response.token_type
-        accessToken = .accessToken(value: response.access_token)
-        refreshToken = .refreshToken(value: response.refresh_token)
+        lock.withLock {
+            self.response = response
+        }
     }
 
     public func clearTokens() {
-        tokenType = nil
-        refreshToken = nil
-        idToken = nil
-        accessToken = nil
+        lock.withLock {
+            response = nil
+        }
     }
 }
 

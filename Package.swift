@@ -5,23 +5,21 @@ import PackageDescription
 
 let package = Package(
     name: "Indice.Identity",
-    platforms: [.iOS(.v14), .macOS(.v10_15)],
+    platforms: [.iOS(.v14), .macOS(.v11)],
     products: [
         .library(
             name: "IdentityClient",
             targets: ["IdentityClient"]),
     ],
     dependencies: [
-        // .package(url: "https://github.com/indice-co/Indice.Swift.Networking", .upToNextMinor(from: "1.4.0"))
-        // .package(url: "https://github.com/indice-co/Indice.Swift.Networking", branch: "develop"),
-        .package(path: "~/Projects/Mobile/Platform/Networking.iOS")
+        .package(url: "https://github.com/indice-co/Indice.Swift.Networking", .upToNextMinor(from: "1.5.0"))
     ],
     targets: [
         .target(
             name: "IdentityClient",
             dependencies: [
                 // .product(name: "NetworkUtilities", package: "Indice.Swift.Networking"),
-                .product(name: "NetworkUtilities", package: "Networking.iOS"),
+                .product(name: "NetworkUtilities", package: "Indice.Swift.Networking"),
             ]
         ),
         .testTarget(

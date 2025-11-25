@@ -20,8 +20,8 @@ public protocol RequestProcessor: AnyObject, Sendable {
 
 final internal class RequestProcessorWrapper: RequestProcessor, Sendable {
     
-    private let processor: RequestProcessor
-    private let tokenAccessor: TokenStorageAccessor
+    let processor: RequestProcessor
+    let tokenAccessor: TokenStorageAccessor
     
     init(processor: RequestProcessor, tokenAccessor: TokenStorageAccessor) {
         self.processor = processor
@@ -40,8 +40,3 @@ final internal class RequestProcessorWrapper: RequestProcessor, Sendable {
                      forHeaderName: "Authorization"))
     }
 }
-
-
-
-
-

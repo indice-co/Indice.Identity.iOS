@@ -8,12 +8,24 @@
 import Foundation
 
 public struct NetworkOptions: Sendable {
-    let processor   : @Sendable () -> RequestProcessor
+    let processorBuilder : @Sendable () -> RequestProcessor
     let errorParser : ErrorParser
     
-    public init(processor: @Sendable @escaping () -> RequestProcessor, errorParser: ErrorParser) {
-        self.processor = processor
-        self.errorParser = errorParser
+    public init(
+        processorBuilder: @Sendable @escaping () -> RequestProcessor,
+        errorParser: ErrorParser
+    ) {
+        self.processorBuilder = processorBuilder
+        self.errorParser      = errorParser
     }
+    
+    public init(
+        errorParser: ErrorParser,
+        processorBuilder: @Sendable @escaping () -> RequestProcessor,
+    ) {
+        self.processorBuilder = processorBuilder
+        self.errorParser      = errorParser
+    }
+
 }
 

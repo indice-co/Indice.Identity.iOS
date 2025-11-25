@@ -24,4 +24,5 @@ public struct UserInfo: Codable, Sendable {
     public var phone_number: String?
     public var phone_number_verified: Bool?
     public var max_devices_count: String?
+    public var password_expired: Bool?
 }

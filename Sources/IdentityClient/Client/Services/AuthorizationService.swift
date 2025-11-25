@@ -64,11 +64,13 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
             let signedChallenge = try CryptoUtils.sign(string: response.challenge, with: keys)
             
             return .init(
-                grant: .biometrict(challenge: response.challenge,
-                                   codeSignature: signedChallenge,
-                                   codeVerifier: codeVerifier,
-                                   publicKey: publicPem),
-                securityData: .init(key: keys.private))
+                grant: .biometrict(
+                    challenge: response.challenge,
+                    codeSignature: signedChallenge,
+                    codeVerifier: codeVerifier,
+                    publicKey: publicPem),
+                securityData: .init(
+                    key: keys.private))
             
         case .devicePin(let value):
             let keys = try keyOrThrow(locked: false, tagged: .devicePin)
@@ -148,7 +150,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
         
         do {
             self.signingData = data.securityData
-            try await login(withGrant: try await data.grant)
+            try await login(withGrant: data.grant)
         } catch {
             self.signingData = nil
         }
@@ -184,7 +186,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
             .with(client: client)
             .with(deviceIds: thisDeviceRepository.ids)
         
-        await tokenStorage.parse(try await authRepository.authorize(grant: final))
+        tokenStorage.parse(try await authRepository.authorize(grant: final))
     }
     
     
@@ -205,7 +207,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
     
     /// Try to refresh current token
     public func refreshTokens() async throws {
-        guard let refresh = await tokenStorage.refreshToken else {
+        guard let refresh = tokenStorage.refreshToken else {
             throw errorOfType(.authorization(error: .refreshTokenMissing))
         }
         
@@ -217,10 +219,10 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
     /// **access_token can be revoked only if it is a reference token**.
     public func revokeTokens() async throws {
         self.signingData = nil
-        let accessToken  = await tokenStorage.accessToken
-        let refreshToken = await tokenStorage.refreshToken
+        let accessToken  = tokenStorage.accessToken
+        let refreshToken = tokenStorage.refreshToken
         
-        await tokenStorage.clearTokens()
+        tokenStorage.clearTokens()
         
         if let accessToken {
             try await authRepository.revoke(token: accessToken,
@@ -241,6 +243,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
     
     /// Create a prepared URL pointing to the authentication's proper endpoint in order to initiate an "Authorization Code" flow.
     /// acr\_values, and ui\_locales are omitted as they can me appended by the consumer manually.
+    nonisolated
     public func authorizationUrl(withPkce pkce: PKCE, andPrompt prompt: String) throws -> URL {
         var url = configuration.authorizationEndpoint
         
@@ -276,7 +279,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
         return url
     }
     
-    public func endSessionUrl() async throws -> URL {
+    public func endSessionUrl() throws -> URL {
         var url = configuration.logoutEndpoint
         
         guard let postLogout = client.urls?.postLogout else {
@@ -284,7 +287,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
         }
         
         let queryParams: [URLQueryItem] = [
-            .init(name: "id_token_hint",            value: await tokenStorage.idToken),
+            .init(name: "id_token_hint",            value: tokenStorage.idToken),
             .init(name: "post_logout_redirect_uri", value: postLogout)]
         
         if #available(iOS 16.0, *) {
@@ -324,7 +327,7 @@ public struct DeviceGrantData: ~Copyable {
     let securityData: AuthorizationSecurityData?
 }
 
-public struct AuthorizationSecurityData: Sendable {
+public actor AuthorizationSecurityData {
     public enum Error: Swift.Error {
         case signing(error: Swift.Error?)
         case notAvailable
@@ -341,14 +344,12 @@ public struct AuthorizationSecurityData: Sendable {
         }
     }
     
-    private let key: SecKeyActorWrapper
+    private let key: SecKey
     
-    init(key: SecKey) {
-        self.key = .init(key: key)
-    }
+    init(key: SecKey) { self.key = key }
     
     internal func extractPublicKeyDER() async throws(Error) -> Data {
-        guard let publicKey = SecKeyCopyPublicKey(await key.value()) else {
+        guard let publicKey = SecKeyCopyPublicKey(key) else {
             throw Error.notAvailable
         }
         var error: Unmanaged<CFError>? = nil
@@ -361,7 +362,7 @@ public struct AuthorizationSecurityData: Sendable {
     
     public func sign(_ data: Data, dataType: SignatureDataType) async throws(Error) -> Data {
         var error: Unmanaged<CFError>? = nil
-        let result = SecKeyCreateSignature(await key.value(), dataType.algorithm, data as CFData, &error)
+        let result = SecKeyCreateSignature(key, dataType.algorithm, data as CFData, &error)
         
         guard let signatureData = result as Data? else {
             throw Error.signing(error: error?.takeRetainedValue())
@@ -371,20 +372,6 @@ public struct AuthorizationSecurityData: Sendable {
     }
 }
 
-
-extension SecKey: @unchecked Sendable {}
-
-private actor SecKeyActorWrapper {
-    let key: SecKey
-    
-    func value() -> SecKey {
-        self.key
-    }
-    
-    init(key: SecKey) {
-        self.key = key
-    }
-}
 
 fileprivate extension CryptoUtils.KeyResult {
     var pair: KeyPair? {

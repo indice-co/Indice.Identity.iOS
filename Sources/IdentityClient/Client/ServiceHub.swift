@@ -10,13 +10,16 @@ import Foundation
 
 public final class ServiceHub: @unchecked Sendable {
     
+    private let lock = CriticalSectionLock()
+    private let builderLock = CriticalSectionLock()
+    
     private var authorization: AuthorizationService!
     private var account: AccountService!
     private var devices: DevicesService!
     private var user: UserService!
     private var userRegistration: UserRegistrationService!
     
-    private let requestProcessor: RequestProcessor
+    private let processorBuilder: () -> RequestProcessor
     private let configuration: IdentityClient.Configuration
     private let options: IdentityClient.Options
     private let errorParser: ErrorParser
@@ -29,7 +32,7 @@ public final class ServiceHub: @unchecked Sendable {
     
     
     init(
-        requestProcessor: RequestProcessor,
+        processorBuilder: @escaping () -> RequestProcessor,
         configuration: IdentityClient.Configuration,
         options: IdentityClient.Options,
         storage: ValueStorage,
@@ -39,7 +42,7 @@ public final class ServiceHub: @unchecked Sendable {
         client: Client,
         errorParser: ErrorParser,
     ) {
-        self.requestProcessor = requestProcessor
+        self.processorBuilder = processorBuilder
         self.configuration    = configuration
         self.options          = options
         self.storage          = storage
@@ -50,32 +53,48 @@ public final class ServiceHub: @unchecked Sendable {
         self.errorParser      = errorParser
     }
     
+    private var requestProcessor: RequestProcessorWrapper!
+    
+    var processor: RequestProcessorWrapper {
+        builderLock.withLock {
+            if requestProcessor == nil {
+                let wrapped = RequestProcessorWrapper(
+                    processor: processorBuilder(),
+                    tokenAccessor: tokenStorage)
+                
+                requestProcessor = wrapped
+            }
+            
+            return requestProcessor
+        }
+    }
+    
     internal lazy
     var authRepository: AuthRepository = {
         DefaultRepositoryFactory.authRepository(
             configuration: configuration,
-            requestProcessor: requestProcessor)
+            requestProcessor: processor)
     }()
     
     internal lazy
     var accountRepository: MyAccountRepository = {
         DefaultRepositoryFactory.myAccountRepository(
             configuration: configuration,
-            requestProcessor: requestProcessor)
+            requestProcessor: processor)
     }()
     
     internal lazy
     var devicesRepository: DevicesRepository = {
         DefaultRepositoryFactory.devicesRepository(
             configuration: configuration,
-            requestProcessor: requestProcessor)
+            requestProcessor: processor)
     }()
     
     internal lazy
     var userRepository: UserInfoRepository = {
         DefaultRepositoryFactory.userRepository(
             configuration: configuration,
-            requestProcessor: requestProcessor)
+            requestProcessor: processor)
     }()
     
     internal lazy
@@ -87,68 +106,69 @@ public final class ServiceHub: @unchecked Sendable {
     }()
     
     
-    @ServicesActor
-    func authorizationService() -> AuthorizationService {
-        if authorization == nil {
-            self.authorization = .init(
-                authRepository: authRepository,
-                accountRepository: accountRepository,
-                devicesRepository: devicesRepository,
-                thisDeviceRepository: thisDeviceRepository,
-                tokenStorage: tokenStorage,
-                client: client,
-                configuration: configuration)
+    var authorizationService: AuthorizationService {
+        lock.withLock {
+            if authorization == nil {
+                self.authorization = .init(
+                    authRepository: authRepository,
+                    accountRepository: accountRepository,
+                    devicesRepository: devicesRepository,
+                    thisDeviceRepository: thisDeviceRepository,
+                    tokenStorage: tokenStorage,
+                    client: client,
+                    configuration: configuration)
+            }
+            
+            return authorization
         }
-        
-        return authorization
     }
     
-    @ServicesActor
-    func accountService() -> AccountService {
-        if account == nil {
-            account = .init(accountRepository: accountRepository)
+    var accountService: AccountService {
+        lock.withLock {
+            if account == nil {
+                account = .init(accountRepository: accountRepository)
+            }
+            
+            return account
         }
-        
-        return account
     }
     
-    @ServicesActor
-    func devicesService() -> DevicesService {
-        if devices == nil {
-            devices = .init(
-                identityOptions: options,
-                serviceProvider: self,
-                thisDeviceRepository: thisDeviceRepository,
-                devicesRepository: devicesRepository,
-                valueStorage: storage,
-                client: client)
+    var devicesService: DevicesService {
+        lock.withLock {
+            if devices == nil {
+                devices = .init(
+                    identityOptions: options,
+                    serviceProvider: self,
+                    thisDeviceRepository: thisDeviceRepository,
+                    devicesRepository: devicesRepository,
+                    valueStorage: storage,
+                    secureStorage: secureStorage,
+                    client: client)
+            }
+            
+            return devices
         }
-        
-        return devices
     }
     
-    @ServicesActor
-    func userService() -> UserService {
-        if user == nil {
-            user = .init(userRepository: userRepository)
+    var userService: UserService {
+        lock.withLock {
+            if user == nil {
+                user = .init(userRepository: userRepository)
+            }
+            
+            return user
         }
-        
-        return user
     }
     
-    @ServicesActor
-    func registrationService() -> UserRegistrationService {
-        if userRegistration == nil {
-            userRegistration = .init(
-                accountRepository: accountRepository,
-                errorParser: errorParser)
+    var registrationService: UserRegistrationService {
+        lock.withLock {
+            if userRegistration == nil {
+                userRegistration = .init(
+                    accountRepository: accountRepository,
+                    errorParser: errorParser)
+            }
+            
+            return userRegistration
         }
-        
-        return userRegistration
     }
-}
-
-@globalActor
-public final actor ServicesActor {
-    public static let shared = ServicesActor()
 }
