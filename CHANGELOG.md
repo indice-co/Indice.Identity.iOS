@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.3.0] - 2025-XX-XX
+## [1.3.0] - 2025-12-04
 
 ### Breaking changes
 - Rename package to `IdentityClient`. Find/Replace all your imports fromt `import Indice_Identity` to `import IdentityClient`, it'll be fine.
