@@ -3,17 +3,17 @@
 ## [1.3.0] - 2025-XX-XX
 
 ### Breaking changes
-- Rename the package and import to `IdentityClient`. Find/Replace all your imports it'll be fine.
+- Rename package to `IdentityClient`. Find/Replace all your imports fromt `import Indice_Identity` to `import IdentityClient`, it'll be fine.
+- Rename property `IdentityClient.authorizationService` to `IdentityClient.authService` for brevity. 
 - Remove `IdentityClientFactory`. User `IdentityClient.init` as it is a concrete type now. 
-- `IdentityClient.init` property `NetworkOptions` do not provide the instance of the client. 
+- `IdentityClient.init` property `NetworkOptions` do not provide the instance of the client.
 - `AuthorizationService.generateGrant(for:)` returns `AuthorizationSecurityData`, a wrapper over the `DeviceAuthenticationGrant`. The grant is available via the `grant` property of the struct.
 
 ### Changes
 - Using swift tools 6.2. Various models and apis are now marked as `Sendable`.
-- Added `IdentityClient` exposes all services as type alias, to avoid name conflicts on common class names. 
-- Added `SecureStorage` class, that uses the SecItem API.
-- Added `IdentityClient` uses `SecureStorage` for sensitive data storage.
-- Added `AuthorizationService` exposes a `signWithBiometricSecurityContext(_:dataType:)` method that signs a `Swift.Data` struct with the security context of the latest successful biometric grant flow.
+- `IdentityClient` exposes all its services as a type alias, to avoid name conflicts on common type names. 
+- Added a `SecureStorage` class, that uses the SecItem API, used for sensitive data storage.
+- `AuthorizationService` exposes a `signWithBiometricSecurityContext(_:dataType:)` method that signs a `Swift.Data` struct with the security context of the latest successful biometric grant flow, if available.
 - Added default implementation of `CurrentDeviceInfoProvider` protocol, if `UIKit` and `DeviceKit` are available. Available as a static property `uiDevice`. 
 - Added `CriticalSectionLock` a wrapper over an __non reentrant__ `os_unfair_lock`. Used internaly, available also for you!
 

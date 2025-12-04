@@ -10,7 +10,7 @@ import Foundation
 
 public final class ServiceHub: @unchecked Sendable {
     
-    private let lock = CriticalSectionLock()
+    private let lock        = CriticalSectionLock()
     private let builderLock = CriticalSectionLock()
     
     private var authorization: AuthorizationService!

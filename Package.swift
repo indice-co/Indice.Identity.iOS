@@ -18,8 +18,7 @@ let package = Package(
         .target(
             name: "IdentityClient",
             dependencies: [
-                // .product(name: "NetworkUtilities", package: "Indice.Swift.Networking"),
-                .product(name: "NetworkUtilities", package: "Indice.Swift.Networking"),
+                .product(name: "NetworkUtilities", package: "Indice.Swift.Networking")
             ]
         ),
         .testTarget(

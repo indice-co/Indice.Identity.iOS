@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum TokenType: Sendable {
+public enum TokenType: Sendable, Codable {
     case accessToken  (value: String)
     case refreshToken (value: String)
     
