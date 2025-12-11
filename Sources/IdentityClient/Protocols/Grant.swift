@@ -54,7 +54,7 @@ internal extension OAuth2Grant {
     As `authorization_details` is a dynamic objects, and not always present,
     the property is not a part of the base protocol.
      */
-    func with(authorizationDetails details: some Codable) -> OAuth2Grant {
+    func with(authorizationDetails details: String) -> OAuth2Grant {
         let extras = ["authorization_details": details]
         
         return OAuthParamsWrapper(parent: self, extras: extras)

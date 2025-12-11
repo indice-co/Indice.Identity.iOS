@@ -11,6 +11,9 @@ import Foundation
 public actor AuthorizationService: AuthorizationSecurityDataHolder {
 
     public typealias SecurityData = AuthorizationSecurityData
+    public struct AuthorizationDetails {
+        internal let value: Data
+    }
     
     private let authRepository: AuthRepository
     private let accountRepository: MyAccountRepository
@@ -111,8 +114,12 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
     /// as excpected by the [Rich Authorization Request RFC 9396](https://datatracker.ietf.org/doc/html/rfc9396).
     ///
     /// `errorJsonData` is expected as the full `Data` reponse body from a failed HTTP request.
-    public func extractAuthorizationDetailsFrom(errorJsonData jsonData: Data) throws -> Data {
-        try RawJSONExtractor.extractValue(forKey: "authorization_details", from: jsonData)
+    public func extractAuthorizationDetailsFrom(errorJsonData jsonData: Data) throws -> AuthorizationDetails {
+        let data = try RawJSONExtractor.extractValue(
+            forKey: "authorization_details",
+            from: jsonData)
+        
+        return AuthorizationDetails(value: data)
     }
     
     
@@ -195,11 +202,11 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
     ///
     /// - Params:
     /// - authorizationDetails: The value of the "authorization_details" property o
-    public func tokenFor(authorizationDetails details: some Codable, withGrant grant: OAuth2Grant) async throws -> TokenResponse {
+    public func tokenFor(authorizationDetails details: AuthorizationDetails, withGrant grant: OAuth2Grant) async throws -> TokenResponse {
         let final = grant
             .with(client: client)
             .with(deviceIds: thisDeviceRepository.ids)
-            .with(authorizationDetails: details)
+            .with(authorizationDetails: String(data: details.value, encoding: .utf8)!)
         
         return try await authRepository.authorize(grant: final)
     }
