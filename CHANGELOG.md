@@ -1,5 +1,18 @@
 # Changelog
 
+
+## [1.3.2] - XXXX-XX-XX
+
+### Changes
+- Revert minimum OS versions to iOS 13 and macOS 10.15.
+
+
+## [1.3.1] - 2025-12-06
+
+### Changes
+- RAR related authorization details methods, return and consume `AuthorizationDetails` to minimize mishandling.  
+
+
 ## [1.3.0] - 2025-12-04
 
 ### Breaking changes

@@ -154,7 +154,8 @@ final public actor DevicesService: Sendable {
 
         self.devicesInfo
             .$thisDevice
-            .assign(to: &quickLoginStatus.$thisDevice)
+            .assign(to: \.thisDevice, on: quickLoginStatus)
+            .store(in: &cancellables)
     }
 
     /// Refresh the list of the user's devices

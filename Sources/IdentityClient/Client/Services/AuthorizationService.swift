@@ -252,7 +252,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
     /// acr\_values, and ui\_locales are omitted as they can me appended by the consumer manually.
     nonisolated
     public func authorizationUrl(withPkce pkce: PKCE, andPrompt prompt: String) throws -> URL {
-        var url = configuration.authorizationEndpoint
+        let url = configuration.authorizationEndpoint
         
         guard let redirectUri = client.urls?.authorization else {
             throw errorOfType(.url(malformedUrl: configuration.authorizationEndpoint.absoluteString))
@@ -276,14 +276,8 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
         let paramsAsQueryParams: [URLQueryItem] = queryParams.map {
             .init(name: $0.key, value: $0.value)
         }
-        
-        if #available(iOS 16.0, *) {
-            url.append(queryItems: paramsAsQueryParams)
-        } else {
-            try url.appendQueryItems(paramsAsQueryParams)
-        }
-        
-        return url
+
+        return try url.appendingQueryItems(paramsAsQueryParams)
     }
     
     public func endSessionUrl() throws -> URL {
@@ -297,11 +291,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
             .init(name: "id_token_hint",            value: tokenStorage.idToken),
             .init(name: "post_logout_redirect_uri", value: postLogout)]
         
-        if #available(iOS 16.0, *) {
-            url.append(queryItems: queryParams)
-        } else {
-            try url.appendQueryItems(queryParams)
-        }
+        try url.appendQueryItems(queryParams)
         
         return url
     }

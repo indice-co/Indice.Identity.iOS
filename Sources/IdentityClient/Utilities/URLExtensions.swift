@@ -9,28 +9,39 @@ import Foundation
 
 public extension URL {
     
-    @available(iOS, deprecated: 16.0, message: "Use the built-in API instead 'append(queryItems: [URLQueryItem])'")
+    @available(iOS,   deprecated: 16.0, message: "Use the built-in API instead 'append(queryItems: [URLQueryItem])'")
+    @available(macOS, deprecated: 13.0, message: "Use the built-in API instead 'append(queryItems: [URLQueryItem])'")
     mutating func appendQueryItems(_ items: [URLQueryItem]) throws {
-        guard #available(iOS 16, *) else {
-            guard var urlComponents = URLComponents(string: absoluteString) else {
-                throw errorOfType(.url(malformedUrl: absoluteString))
-            }
+        #if os(macOS)
+        if #available(macOS 13, *) {
+            return self.append(queryItems: items)
+        }
+        #elseif os(iOS)
+        if #available(iOS 16, *) {
+            return self.append(queryItems: items)
+        }
+        #endif
+        
+        guard var urlComponents = URLComponents(string: absoluteString) else {
+            throw errorOfType(.url(malformedUrl: absoluteString))
+        }
 
-            let initialsParams = urlComponents.queryItems ??  []
-            urlComponents.queryItems = initialsParams + items
-            
-            guard let newUrl = urlComponents.url else {
-                throw errorOfType(.url(malformedUrl: absoluteString))
-            }
-            
-            self = newUrl
-            
-            return
+        let initialsParams = urlComponents.queryItems ??  []
+        urlComponents.queryItems = initialsParams + items
+        
+        guard let newUrl = urlComponents.url else {
+            throw errorOfType(.url(malformedUrl: absoluteString))
         }
         
-        
-        self.append(queryItems: items)
+        self = newUrl
     }
+    
+    func appendingQueryItems(_ items: [URLQueryItem]) throws -> URL {
+        var url = self
+        try url.appendQueryItems(items)
+        return url
+    }
+    
 }
 
 
