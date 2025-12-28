@@ -27,17 +27,17 @@ protocol KeyPair: Sendable {
 }
 
 final class CryptoUtils {
+    enum Error: Swift.Error {
+        case missingKey(_ status: OSStatus)
+        case reason(_ error: Swift.Error)
+    }
+    
     
     typealias TagData = Data
     
     private struct InnerKeyPair: KeyPair  {
         let `public`  : SecKey
         let `private` : SecKey
-    }
-    
-    enum KeyResult {
-        case value(pair: KeyPair)
-        case error(code: OSStatus)
     }
     
     class func challenge(for verifier: String, encoding: String.Encoding = .utf8) -> String {
@@ -47,7 +47,7 @@ final class CryptoUtils {
         return CryptoRandom.base64URLEncode(bytes: hash)
     }
     
-    class func createKeyPair(locked: Bool, tagged tag: TagData? = nil) throws -> KeyPair {
+    class func createKeyPair(locked: Bool, tagged tag: TagData? = nil) throws(Error) -> KeyPair {
         let tagData = tag ?? SecHelper.createTag(lockedKey: locked)
         let attrs   = SecHelper.createAttributes(tagged: tagData, bioLocked: locked)
         
@@ -55,7 +55,7 @@ final class CryptoUtils {
         
         var error: Unmanaged<CFError>?
         guard let privateKey = SecKeyCreateRandomKey(attrs as CFDictionary, &error) else {
-            throw error!.takeRetainedValue() as Error
+            throw .reason(error!.takeRetainedValue() as Swift.Error)
         }
         
         let publicKey  = SecKeyCopyPublicKey(privateKey)!
@@ -63,21 +63,20 @@ final class CryptoUtils {
         return InnerKeyPair(public: publicKey, private: privateKey)
     }
 
-    class func loadKeyPair(locked: Bool, tagged tag: TagData? = nil) -> KeyResult {
+    class func loadKeyPair(locked: Bool, tagged tag: TagData? = nil) throws(Error) -> KeyPair {
         let tagData = tag ?? SecHelper.createTag(lockedKey: locked)
         let query = SecHelper.createQuery(tagData: tagData, locked: locked)
         
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
         guard status == errSecSuccess else {
-            print("keychain don't have private key (\(status)")
-            return .error(code: status)
+            throw .missingKey(status)
         }
         
         let privateKey = item as! SecKey
         let publicKey  = SecKeyCopyPublicKey(privateKey)!
         
-        return .value(pair: InnerKeyPair(public: publicKey, private: privateKey))
+        return InnerKeyPair(public: publicKey, private: privateKey)
     }
 
     @discardableResult
@@ -89,34 +88,36 @@ final class CryptoUtils {
         return status == noErr
     }
     
-    class func pem(for keyPair: KeyPair) throws -> String {
+    class func pem(for keyPair: KeyPair) throws(Error) -> String {
         let publicKeyReference = keyPair.public
         
         var error: Unmanaged<CFError>? = nil
         let keyBytes = SecKeyCopyExternalRepresentation(publicKeyReference, &error)
-        if let error = error?.takeRetainedValue() { throw error }
+        if let error = error?.takeRetainedValue() {
+            throw .reason(error)
+        }
         
         return SecHelper.convertDerToPem(from: keyBytes! as Data)
     }
     
-    class func sign(string: String, with keyPair: KeyPair) throws -> String {
+    class func sign(string: String, with keyPair: KeyPair) throws(Error) -> String {
         return try sign(data: string.data(using: .utf8)!, with: keyPair)
             .base64EncodedString()
     }
     
-    class func sign(data: Data, with keyPair: KeyPair) throws -> Data {
+    class func sign(data: Data, with keyPair: KeyPair) throws(Error) -> Data {
         
         var response: Unmanaged<CFError>? = nil
         let signedData = SecKeyCreateSignature(keyPair.private, .rsaSignatureMessagePKCS1v15SHA256, data as CFData, &response)
         
         if let error = response?.takeRetainedValue() {
-            throw error
+            throw .reason(error)
         } else {
             return signedData! as Data
         }
     }
 
-    class func prepare(pin: String, withDeviceId deviceId: String, and keys: KeyPair) throws -> String {
+    class func prepare(pin: String, withDeviceId deviceId: String, and keys: KeyPair) throws(Error) -> String {
         let value  = "\(pin)-\(deviceId)"
         let signed = try sign(string: value, with: keys)
         let bytes  = SHA256.hash(data: signed.data(using: .utf8)!)
