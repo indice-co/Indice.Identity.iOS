@@ -376,9 +376,9 @@ extension DevicesService {
             $0.deviceId != ids.device
         }
             
-        let currentTrustedCount = devices.filter {
+        let currentTrustedCount = devices.count {
             $0.isTrusted == true
-        }.count
+        }
         
         let swapDeviceId: String? = await {
             if currentTrustedCount >= identityOptions.maxTrustedDevicesCount {
