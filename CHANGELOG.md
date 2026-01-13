@@ -1,11 +1,11 @@
 # Changelog
 
 
-## [1.3.2] - XXXX-XX-XX
+## [1.3.2] - 2026-01-13
 
 ### Changes
 - Revert minimum OS versions to iOS 13 and macOS 10.15.
-
+- IdentityClient doesn't set the `Authorization` header, if it is already present
 
 ## [1.3.1] - 2025-12-06
 
