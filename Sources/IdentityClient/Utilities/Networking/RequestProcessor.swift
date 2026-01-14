@@ -29,14 +29,32 @@ final internal class RequestProcessorWrapper: RequestProcessor, Sendable {
     }
     
     func process(request: URLRequest) async throws {
+        guard !request.hasAuthorizationHeaderSet else {
+            try await processor
+                .process(request: request)
+            
+            return
+        }
+        
         try await processor.process(request: request
             .setting(value: tokenAccessor.authorization,
                      forHeaderName: "Authorization"))
     }
     
     func process<T>(request: URLRequest) async throws -> T where T : Decodable, T: Sendable {
-        try await processor.process(request: request
+        guard !request.hasAuthorizationHeaderSet else {
+            return try await processor
+                .process(request: request)
+        }
+        
+        return try await processor.process(request: request
             .setting(value: tokenAccessor.authorization,
                      forHeaderName: "Authorization"))
+    }
+}
+
+private extension URLRequest {
+    var hasAuthorizationHeaderSet: Bool {
+        allHTTPHeaderFields?["Authorization"] != nil
     }
 }
