@@ -30,7 +30,9 @@ final internal class RequestProcessorWrapper: RequestProcessor, Sendable {
     
     func process(request: URLRequest) async throws {
         guard !request.hasAuthorizationHeaderSet else {
-            try await processor.process(request: request)
+            try await processor
+                .process(request: request)
+            
             return
         }
         
@@ -41,7 +43,8 @@ final internal class RequestProcessorWrapper: RequestProcessor, Sendable {
     
     func process<T>(request: URLRequest) async throws -> T where T : Decodable, T: Sendable {
         guard !request.hasAuthorizationHeaderSet else {
-            return try await processor.process(request: request)
+            return try await processor
+                .process(request: request)
         }
         
         return try await processor.process(request: request
@@ -50,9 +53,7 @@ final internal class RequestProcessorWrapper: RequestProcessor, Sendable {
     }
 }
 
-
 private extension URLRequest {
-    
     var hasAuthorizationHeaderSet: Bool {
         allHTTPHeaderFields?["Authorization"] != nil
     }
