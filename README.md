@@ -21,7 +21,7 @@ Add this package as a Swift Package Manager dependency in your Xcode project or 
 2. Or add to `Package.swift` dependencies:
 
 ```swift
-.package(url: "https://github.com/indice-co/Indice.Identity.iOS", .upToNextMinor(from: "1.3.1"))
+.package(url: "https://github.com/indice-co/Indice.Identity.iOS", .upToNextMinor(from: "1.3.2"))
 ```
 
 ## Usage
@@ -68,7 +68,7 @@ let identityClient = IdentityClient(
 )
 
 // Use services
-// await identityClient.authService.login(...)
+// try await identityClient.authService.login(...)
 ```
 
 

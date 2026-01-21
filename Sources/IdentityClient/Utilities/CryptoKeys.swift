@@ -79,6 +79,7 @@ final class CryptoUtils {
         return InnerKeyPair(public: publicKey, private: privateKey)
     }
 
+    /// returns `true` if deletion is successful.
     @discardableResult
     class func deleteKeyPair(locked: Bool, tagged tag: TagData? = nil) -> Bool {
         let tagData = tag ?? SecHelper.createTag(lockedKey: locked)

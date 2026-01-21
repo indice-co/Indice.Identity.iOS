@@ -12,8 +12,9 @@ let package = Package(
             targets: ["IdentityClient"]),
     ],
     dependencies: [
-        // .package(url: "https://github.com/indice-co/Indice.Swift.Networking", .upToNextMinor(from: "1.5.0"))
-        .package(url: "https://github.com/indice-co/Indice.Swift.Networking", branch: "feature/docs")
+        .package(
+            url: "https://github.com/indice-co/Indice.Swift.Networking",
+            .upToNextMinor(from: "1.5.2"))
     ],
     targets: [
         .target(
