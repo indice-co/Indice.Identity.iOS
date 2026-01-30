@@ -250,9 +250,6 @@ extension DevicesService {
             return { [weak self] otpResult in
                 guard let self = self else { return }
                 
-                
-                let securityDataHolder = self.serviceProvider.authorizationService
-                
                 do {
                     let registration = try await devicesRepository.complete(registrationRequest: .pin(code: response.challenge,
                                                                                                      codeVerifier: verifier,
@@ -267,14 +264,11 @@ extension DevicesService {
                     self.thisDeviceRepository.update(
                         registrationId: registration.registrationId)
                     
-                    await securityDataHolder.updateSecurityData(.init(key: keys.private))
-                    
                     AuthRegistrationContext.store(
                         deviceId: deviceIds.device,
                         context: .devicePin,
                         on: self.secureStorage)
                 } catch {
-                    await securityDataHolder.updateSecurityData(nil)
                     AuthRegistrationContext.clear(.devicePin, on: secureStorage)
                     throw error
                 }
@@ -318,6 +312,9 @@ extension DevicesService {
 
             return { [weak self] otpResult in
                 guard let self = self else { return }
+                
+                let securityDataHolder = self.serviceProvider.authorizationService
+                
                 do {
                     let registration = try await self.devicesRepository.complete(
                         registrationRequest: .biometric(
@@ -334,12 +331,16 @@ extension DevicesService {
                     
                     self.thisDeviceRepository.update(registrationId: registration.registrationId)
                     // await self.quickLoginStatus.update(hasFingerprint: true)
+                    
+                    await securityDataHolder.updateSecurityData(.init(key: keys.private))
+                    
                     AuthRegistrationContext.store(
                         deviceId: deviceIds.device,
                         context: .fingerprint,
                         on: self.secureStorage)
                     
                 } catch {
+                    await securityDataHolder.updateSecurityData(nil)
                     AuthRegistrationContext.clear(.fingerprint, on: secureStorage)
                     throw error
                 }
