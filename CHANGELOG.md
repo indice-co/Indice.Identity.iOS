@@ -1,6 +1,12 @@
 # Changelog
 
 
+## [1.3.3] - 2026-01-30
+
+### Fixes
+- Fixed `AuthorizationService.SecurityData` population and storage scenarios
+
+
 ## [1.3.2] - 2026-01-13
 
 ### Changes
