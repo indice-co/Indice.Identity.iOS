@@ -3,8 +3,8 @@
 ## [1.4.0] - 2026-XX-XX
 ### Breaking Changes
 - `CriticalSectionLock` is now deprecated. It will be removed in a later version.
-- `DeviceService changed to an `actor` implementation. Its read properties are available through `CurrenctValueSubject` publishers.
-- `UserService `changed to an `actor` implementation. Its read properties are available through `CurrenctValueSubject` publishers.
+- `DeviceService` changed to an `actor` implementation. Its read properties are available through `MainActor` isolated `CurrenctValueSubject` publishers.
+- `UserService` changed to an `actor` implementation. Its read properties are available through `MainActor` isolated `CurrenctValueSubject` publishers.
 
 
 ## [1.3.3] - 2026-01-30
@@ -40,7 +40,7 @@
 - Added a `SecureStorage` class, that uses the SecItem API, used for sensitive data storage.
 - `AuthorizationService` exposes a `signWithBiometricSecurityContext(_:dataType:)` method that signs a `Swift.Data` struct with the security context of the latest successful biometric grant flow, if available.
 - Added default implementation of `CurrentDeviceInfoProvider` protocol, if `UIKit` and `DeviceKit` are available. Available as a static property `uiDevice`. 
-- Added `CriticalSectionLock` a wrapper over an __non reentrant__ `os_unfair_lock`. Used internaly, available also for you!
+- Added `CriticalSectionLock` a wrapper over an **non reentrant** `os_unfair_lock`. Used internaly, available also for you!
 
 ### Fixes
 - Use of internal `AuthRegistrationContext` to better represent the device's biometric/fourpin registration state, removing the requirement for the consumer to remove/update the relevant states after the `deviceId` changes.
