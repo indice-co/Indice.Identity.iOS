@@ -58,7 +58,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
             let ids = thisDeviceRepository.ids
             
             let response = try await devicesRepository.authorize(
-                authRequest: try .biometrictAuth(
+                authRequest: try .biometricAuth(
                     codeChallenge: verifierHash,
                     deviceIds: ids,
                     client: client))
@@ -67,7 +67,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
             let signedChallenge = try CryptoUtils.sign(string: response.challenge, with: keys)
             
             return .init(
-                grant: .biometrict(
+                grant: .biometric(
                     challenge: response.challenge,
                     codeSignature: signedChallenge,
                     codeVerifier: codeVerifier,
@@ -194,7 +194,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
             .with(client: client)
             .with(deviceIds: thisDeviceRepository.ids)
         
-        tokenStorage.parse(try await authRepository.authorize(grant: final))
+        await tokenStorage.parse(try await authRepository.authorize(grant: final))
     }
     
     
@@ -215,7 +215,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
     
     /// Try to refresh current token
     public func refreshTokens() async throws {
-        guard let refresh = tokenStorage.refreshToken else {
+        guard let refresh = await tokenStorage.refreshToken else {
             throw errorOfType(.authorization(error: .refreshTokenMissing))
         }
         
@@ -227,10 +227,10 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
     /// **access_token can be revoked only if it is a reference token**.
     public func revokeTokens() async throws {
         self.signingData = nil
-        let accessToken  = tokenStorage.accessToken
-        let refreshToken = tokenStorage.refreshToken
+        let accessToken  = await tokenStorage.accessToken
+        let refreshToken = await tokenStorage.refreshToken
         
-        tokenStorage.clearTokens()
+        await tokenStorage.clearTokens()
         
         if let accessToken {
             try await authRepository.revoke(token: accessToken,
@@ -281,7 +281,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
         return try url.appendingQueryItems(paramsAsQueryParams)
     }
     
-    public func endSessionUrl() throws -> URL {
+    public func endSessionUrl() async throws -> URL {
         var url = configuration.logoutEndpoint
         
         guard let postLogout = client.urls?.postLogout else {
@@ -289,7 +289,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
         }
         
         let queryParams: [URLQueryItem] = [
-            .init(name: "id_token_hint",            value: tokenStorage.idToken),
+            .init(name: "id_token_hint",            value: await tokenStorage.idToken),
             .init(name: "post_logout_redirect_uri", value: postLogout)]
         
         try url.appendQueryItems(queryParams)

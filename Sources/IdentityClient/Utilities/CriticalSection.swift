@@ -9,6 +9,7 @@ import Foundation
 
 /// Just a wrapper over a lower level lock
 /// **NON RE-ENTRANT**
+@available(*, deprecated, message: "Do not use. This will be removed in an upcoming version")
 public final class CriticalSectionLock: @unchecked Sendable {
     
     private var lock = os_unfair_lock()

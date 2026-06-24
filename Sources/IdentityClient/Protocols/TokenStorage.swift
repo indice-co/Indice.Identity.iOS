@@ -12,7 +12,7 @@ import Foundation
  Access the stored tokens of an auth response.
  It exists only to stop consumers of the ``TokenStorage`` from
  */
-public protocol TokenStorageAccessor: Sendable {
+public protocol TokenStorageAccessor: Actor {
     var idToken       : String?    { get }
     var refreshToken  : TokenType? { get }
     var accessToken   : TokenType? { get }
@@ -30,11 +30,13 @@ public protocol TokenStorage: TokenStorageAccessor {
 public extension TokenStorageAccessor {
     
     /** The value of the Authorization header based on the ``TokenResponse`` parsed. */
-    var authorization : String? {
-        guard let accessToken, let tokenType else {
-            return nil
+    var authorization: String? {
+        get async {
+            guard let accessToken, let tokenType else {
+                return nil
+            }
+            
+            return "\(tokenType) \(accessToken.value)"
         }
-        
-        return "\(tokenType) \(accessToken.value)"
     }
 }

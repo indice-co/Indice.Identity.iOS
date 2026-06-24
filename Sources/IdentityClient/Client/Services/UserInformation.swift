@@ -6,30 +6,34 @@
 //
 
 import Foundation
-
-public class UserData: ObservableObject, @unchecked Sendable {
-    @Published
-    public internal(set)
-    var info: UserInfo? = nil
-}
+import Combine
 
 /// User info. Is it overkill to have a service for only refreshing `UserInfo`
-public actor UserService: Sendable {
+final public actor UserService: Sendable {
 
-    public
-    nonisolated
-    let user: UserData = .init()
+    @MainActor
+    public let user = CurrentValueSubject<UserInfo?, Never>(nil)
     
     private let userRepository: UserInfoRepository
+    private var infoState: UserInfo? = nil
     
     init(userRepository: UserInfoRepository) {
         self.userRepository = userRepository
     }
     
+    public var info: UserInfo? {
+        infoState
+    }
+    
     @discardableResult
     public func refreshUserInfo() async throws -> UserInfo {
         let result = try await userRepository.userInfo()
-        user.info = result
+        infoState = result
+        
+        await MainActor.run {
+            user.send(result)
+        }
+        
         return result
     }
 }

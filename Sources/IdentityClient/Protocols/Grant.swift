@@ -13,7 +13,7 @@ import Foundation
   Each type carries parameters relevant to their grantType value.
  */
 public protocol OAuth2Grant: Sendable {
-    typealias Params = [String: Any]
+    typealias Params = [String: any Sendable]
     
     /** The grant flow type name */
     static var grantType: String { get }
@@ -54,7 +54,7 @@ internal extension OAuth2Grant {
     As `authorization_details` is a dynamic objects, and not always present,
     the property is not a part of the base protocol.
      */
-    func with(authorizationDetails details: String) -> OAuth2Grant {
+    func with(authorizationDetails details: String) -> any OAuth2Grant {
         let extras = ["authorization_details": details]
         
         return OAuthParamsWrapper(parent: self, extras: extras)
@@ -65,7 +65,7 @@ internal extension OAuth2Grant {
 internal extension OAuth2Grant {
     
     /** Add the default `Client` properties to a `OAuth2Grant.Params` */
-    func with(client: Client) -> OAuth2Grant {
+    func with(client: Client) -> any OAuth2Grant {
         let scope = self.isUserGrant
                   ? client.userScope
                   : client.appScope
@@ -81,7 +81,7 @@ internal extension OAuth2Grant {
     /** 
     Add the default `ThisDeviceIds` properties to a `OAuth2Grant.Params`
      */
-    func with(deviceIds: ThisDeviceIds) -> OAuth2Grant {
+    func with(deviceIds: ThisDeviceIds) -> any OAuth2Grant {
         let extras: Params = ["device_id"       : deviceIds.device,
                               "registration_id" : deviceIds.registration]
                                   .compactMapValues { $0 }
@@ -95,7 +95,7 @@ internal extension OAuth2Grant {
 /** A wrapper over an ordinary `OAuth2Grant`.
     It's `params` getter will return its original ones and the `authorization_details`.
  */
-private struct OAuthParamsWrapper<Parent: OAuth2Grant>: @unchecked Sendable, OAuth2Grant {
+private struct OAuthParamsWrapper<Parent: OAuth2Grant>: OAuth2Grant {
     static var grantType: String { Parent.grantType }
     
     let parent: Parent

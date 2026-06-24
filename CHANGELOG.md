@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.0] - 2026-XX-XX
+### Breaking Changes
+- `CriticalSectionLock` is now deprecated. It will be removed in a later version.
+- `DeviceService changed to an `actor` implementation. Its read properties are available through `CurrenctValueSubject` publishers.
+- `UserService `changed to an `actor` implementation. Its read properties are available through `CurrenctValueSubject` publishers.
+
 
 ## [1.3.3] - 2026-01-30
 

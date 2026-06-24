@@ -51,7 +51,7 @@ public struct DeviceAuthenticationGrant: OAuth2Grant {
 
 
 public extension OAuth2Grant where Self == DeviceAuthenticationGrant {
-    static func biometrict(challenge: String,
+    static func biometric(challenge: String,
                            codeSignature: String,
                            codeVerifier: String,
                            publicKey: String) -> Self {

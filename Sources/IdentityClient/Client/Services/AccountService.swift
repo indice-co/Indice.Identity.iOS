@@ -9,7 +9,7 @@ import Foundation
 
 
 /// Service responsible for updating the users account
-public class AccountService {
+final public class AccountService: Sendable {
     
     private let accountRepository: MyAccountRepository
     

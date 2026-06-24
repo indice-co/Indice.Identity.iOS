@@ -37,7 +37,7 @@ final internal class RequestProcessorWrapper: RequestProcessor, Sendable {
         }
         
         try await processor.process(request: request
-            .setting(value: tokenAccessor.authorization,
+            .setting(value: await tokenAccessor.authorization,
                      forHeaderName: "Authorization"))
     }
     
@@ -48,7 +48,7 @@ final internal class RequestProcessorWrapper: RequestProcessor, Sendable {
         }
         
         return try await processor.process(request: request
-            .setting(value: tokenAccessor.authorization,
+            .setting(value: await tokenAccessor.authorization,
                      forHeaderName: "Authorization"))
     }
 }

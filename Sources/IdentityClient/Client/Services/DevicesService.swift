@@ -47,50 +47,36 @@ public extension ValueStorageKey {
     static let deviceAuthContextDevicePin  : ValueStorageKey = "device_auth_context_devicePin"
 }
 
-public class DevicesData: ObservableObject, @unchecked Sendable {
+public struct DevicesData: Sendable {
+    public let userDevices: [DeviceInfo]?
+    public let thisDevice: DeviceInfo?
     
-    @Published
-    public private(set)
-    var userDevices: [DeviceInfo]? = nil
-    
-    @Published
-    public private(set)
-    var thisDevice: DeviceInfo? = nil
-    
-    func set(thisDevice: DeviceInfo?) {
-        let prev = self.thisDevice
+    public init(userDevices: [DeviceInfo]? = nil, thisDevice: DeviceInfo? = nil) {
+        self.userDevices = userDevices
         self.thisDevice = thisDevice
+    }
+    
+    func setting(thisDevice: DeviceInfo?) -> Self {
+        var userDevices = self.userDevices
         
         if let thisDevice {
-            updateNoAddWith(device: thisDevice)
-        } else if let prev {
-            self.userDevices?
-                .removeAll { $0.deviceId == prev.deviceId }
-        }
-    }
-    
-    func set(userDevices: [DeviceInfo]?) {
-        self.userDevices = userDevices
-    }
-    
-    @discardableResult
-    private func updateNoAddWith(device: DeviceInfo) -> Bool {
-        let index = userDevices?.firstIndex {
-            $0.deviceId == device.deviceId
+            if let index = userDevices?.firstIndex(where: { $0.deviceId == thisDevice.deviceId }) {
+                userDevices?[index] = thisDevice
+            }
+        } else if let previous = self.thisDevice {
+            userDevices?.removeAll { $0.deviceId == previous.deviceId }
         }
         
-        guard let index else { return false }
-        
-        userDevices?[index] = device
-        return true
+        return .init(userDevices: userDevices, thisDevice: thisDevice)
+    }
+    
+    func setting(userDevices: [DeviceInfo]?) -> Self {
+        .init(userDevices: userDevices, thisDevice: thisDevice)
     }
 }
 
-
-
-final public class QuickLoginStatus: ObservableObject, @unchecked Sendable {
-    
-    public enum Context: String, Codable {
+public struct QuickLoginStatus: Sendable {
+    public enum Context: String, Codable, Sendable {
         case devicePin, fingerprint
         
         internal var storageKey: ValueStorageKey {
@@ -101,15 +87,11 @@ final public class QuickLoginStatus: ObservableObject, @unchecked Sendable {
         }
     }
     
-    let storage: SecureStorage
+    public let thisDevice: DeviceInfo?
     
-    init(storage: SecureStorage) {
-        self.storage = storage
+    public init(thisDevice: DeviceInfo? = nil) {
+        self.thisDevice = thisDevice
     }
-    
-    @Published
-    internal
-    var thisDevice: DeviceInfo? = nil
     
     public var hasDevicePin: Bool {
         thisDevice?.supportsPinLogin ?? false
@@ -122,45 +104,41 @@ final public class QuickLoginStatus: ObservableObject, @unchecked Sendable {
     public var hasQuickLogin: Bool {
         hasFingerprint || hasDevicePin
     }
-    
-    public func hasRegistered(for context: Context) -> Bool {
-        storage.read(key: context.storageKey).map { data in
-            (try? JSONDecoder().decode(
-                AuthRegistrationContext.self,
-                from: data))?
-                    .context == context
-        } ?? false
-    }
 }
 
-/// Manages the users devices. Provides info as bindable objects that the relevant UI can use.
+/// Manages the users devices. Provides device snapshots through CurrentValueSubject publishers.
 final public actor DevicesService: Sendable {
 
-    nonisolated
-    public let devicesInfo: DevicesData = .init()
-    
-    nonisolated
-    public let quickLoginStatus: QuickLoginStatus
+    @MainActor public let devicesInfo = CurrentValueSubject<DevicesData, Never>(.init())
+    @MainActor public let quickLoginStatus = CurrentValueSubject<QuickLoginStatus, Never>(.init())
     
     private let identityOptions      : IdentityClientOptions
-    private let serviceProvider      : ServiceHub
+    private let authorizationService : AuthorizationService
     private let thisDeviceRepository : ThisDeviceRepository
     private let devicesRepository    : DevicesRepository
     private let valueStorage         : ValueStorage
     private let secureStorage        : SecureStorage
     private let errorParser          : ErrorParser
     private let client               : Client
-
     
-    private var tokens = Set<AnyCancellable>()
+    private var devicesState: DevicesData = .init()
+    private var quickLoginState: QuickLoginStatus = .init()
     
     public var ids: ThisDeviceIds {
         thisDeviceRepository.ids
     }
     
+    public var currentDevicesInfo: DevicesData {
+        devicesState
+    }
+    
+    public var currentQuickLoginStatus: QuickLoginStatus {
+        quickLoginState
+    }
+    
     init(
         identityOptions: IdentityClientOptions,
-        serviceProvider: ServiceHub,
+        authorizationService: AuthorizationService,
         thisDeviceRepository: ThisDeviceRepository,
         devicesRepository: DevicesRepository,
         valueStorage: ValueStorage,
@@ -168,42 +146,34 @@ final public actor DevicesService: Sendable {
         errorParser: ErrorParser,
         client: Client
     ) {
-        
         self.identityOptions = identityOptions
-        self.serviceProvider = serviceProvider
+        self.authorizationService = authorizationService
         self.thisDeviceRepository = thisDeviceRepository
         self.devicesRepository = devicesRepository
         self.valueStorage = valueStorage
         self.secureStorage = secureStorage
         self.errorParser = errorParser
         self.client = client
-        self.quickLoginStatus = .init(storage: secureStorage)
-
-        self.devicesInfo
-            .$thisDevice
-            .assign(to: \.thisDevice, on: quickLoginStatus)
-            .store(in: &tokens)
     }
 
     /// Refresh the list of the user's devices
     public func refreshDevices() async throws {
         let devices = try await fetchUserDevices()
-        devicesInfo.set(userDevices: devices)
-        devicesInfo.set(thisDevice: devices.first(where: { $0.deviceId == ids.device }))
+        await updateDevicesInfo(userDevices: devices)
+        await updateDevicesInfo(thisDevice: devices.first(where: { $0.deviceId == ids.device }))
     }
     
     public func refreshThisDevice() async throws {
-        devicesInfo.set(thisDevice: try await fetchCurrentDevice())
-        
+        await updateDevicesInfo(thisDevice: try await fetchCurrentDevice())
     }
     
     /// Register or update an existing registration of the current device.
     @discardableResult
     public func updateThisDeviceRegistration(pnsHandle: String? = nil, tags: [String]? = nil) async throws -> DeviceInfo {
         let isRegistered: Bool = try await {
-            if devicesInfo.thisDevice == nil {
+            if devicesState.thisDevice == nil {
                 try await refreshThisDevice()
-                return devicesInfo.thisDevice != nil
+                return devicesState.thisDevice != nil
             } else { return true }
         }()
         
@@ -227,7 +197,7 @@ final public actor DevicesService: Sendable {
                                       customTags: tags))
         }
         
-        devicesInfo.set(thisDevice: current)
+        await updateDevicesInfo(thisDevice: current)
         
         return current
     }
@@ -236,20 +206,25 @@ final public actor DevicesService: Sendable {
     public func delete(deviceId: String) async throws {
         try await devicesRepository.delete(deviceId: deviceId)
         
-        if devicesInfo.thisDevice?.deviceId == deviceId {
-            devicesInfo.set(thisDevice: nil)
+        if devicesState.thisDevice?.deviceId == deviceId {
+            await updateDevicesInfo(thisDevice: nil)
         }
         
-        if
-           var devices = devicesInfo.userDevices,
-           let index   = devicesInfo.userDevices?.firstIndex(where: { $0.deviceId == deviceId }) {
-            
+        if var devices = devicesState.userDevices,
+           let index = devicesState.userDevices?.firstIndex(where: { $0.deviceId == deviceId }) {
             devices.remove(at: index)
-            devicesInfo.set(userDevices: devices)
+            await updateDevicesInfo(userDevices: devices)
         }
     }
-
     
+    public func hasRegistered(for context: QuickLoginStatus.Context) -> Bool {
+        secureStorage.read(key: context.storageKey).map { data in
+            (try? JSONDecoder().decode(
+                AuthRegistrationContext.self,
+                from: data))?
+                    .context == context
+        } ?? false
+    }
 }
 
 
@@ -351,15 +326,13 @@ extension DevicesService {
              Find a nice way to decide if it will and pass it to the OTP provider?
              */
             
-            let response = try await devicesRepository.initialize(authRequest: .biometrictInit(codeChallenge: verifierHash,
+            let response = try await devicesRepository.initialize(authRequest: .biometricInit(codeChallenge: verifierHash,
                                                                                               deviceIds: deviceIds,
                                                                                               client: client))
             let signedVerifier = try CryptoUtils.sign(string: response.challenge, with: keys)
 
             return { [weak self] otpResult in
                 guard let self = self else { return }
-                
-                let securityDataHolder = self.serviceProvider.authorizationService
                 
                 do {
                     let registration = try await self.devicesRepository.complete(
@@ -374,11 +347,9 @@ extension DevicesService {
                     
                     try await self.updateDeviceWith(deviceId: deviceIds.device)
                     
-                    
                     self.thisDeviceRepository.update(registrationId: registration.registrationId)
-                    // await self.quickLoginStatus.update(hasFingerprint: true)
                     
-                    await securityDataHolder.updateSecurityData(.init(key: keys.private))
+                    await self.authorizationService.updateSecurityData(.init(key: keys.private))
                     
                     AuthRegistrationContext.store(
                         deviceId: deviceIds.device,
@@ -386,7 +357,7 @@ extension DevicesService {
                         on: self.secureStorage)
                     
                 } catch {
-                    await securityDataHolder.updateSecurityData(nil)
+                    await self.authorizationService.updateSecurityData(nil)
                     AuthRegistrationContext.clear(.fingerprint, on: secureStorage)
                     throw error
                 }
@@ -401,24 +372,22 @@ extension DevicesService {
     /// Remove a device pin registration
     public func removeRegistrationDevicePin() async {
         CryptoUtils.deleteKeyPair(locked: false, tagged: .devicePin)
-        // await quickLoginStatus.update(hasDevicePin: false)
     }
  
     /// Remove a fingerprint registration
     public func removeRegistrationFingerprint() async {
         CryptoUtils.deleteKeyPair(locked: true, tagged: .fingerprint)
-        // await quickLoginStatus.update(hasFingerprint: false)
     }
  
     /// Trigger enable current device's trust status
     public func enableDeviceTrust(deviceSelection: CallbackType.DeviceSelection) async throws {
         let ids = thisDeviceRepository.ids
         
-        if devicesInfo.userDevices == nil {
+        if devicesState.userDevices == nil {
             try await refreshDevices()
         }
         
-        let devices = (devicesInfo.userDevices ?? []).filter {
+        let devices = (devicesState.userDevices ?? []).filter {
             $0.deviceId != ids.device
         }
             
@@ -481,8 +450,8 @@ extension DevicesService {
 
     func updateDeviceWith(deviceId: String) async throws {
         let newDevice   = try await devicesRepository.device(byId: deviceId)
-        var deviceList  = devicesInfo.userDevices ?? []
-        let devIndex    = devicesInfo.userDevices?
+        var deviceList  = devicesState.userDevices ?? []
+        let devIndex    = devicesState.userDevices?
             .firstIndex(where: { $0.deviceId == newDevice.deviceId })
         
         if let index = devIndex {
@@ -493,9 +462,30 @@ extension DevicesService {
         }
 
         if deviceId == ids.device {
-            devicesInfo.set(thisDevice: newDevice)
+            await updateDevicesInfo(thisDevice: newDevice)
         }
         
-        devicesInfo.set(userDevices: deviceList)
+        await updateDevicesInfo(userDevices: deviceList)
+    }
+    
+    private func updateDevicesInfo(thisDevice: DeviceInfo?) async {
+        devicesState = devicesState.setting(thisDevice: thisDevice)
+        quickLoginState = .init(thisDevice: thisDevice)
+        let devicesState = devicesState
+        let quickLoginState = quickLoginState
+        
+        await MainActor.run {
+            devicesInfo.send(devicesState)
+            quickLoginStatus.send(quickLoginState)
+        }
+    }
+    
+    private func updateDevicesInfo(userDevices: [DeviceInfo]?) async {
+        devicesState = devicesState.setting(userDevices: userDevices)
+        let devicesState = devicesState
+        
+        await MainActor.run {
+            devicesInfo.send(devicesState)
+        }
     }
 }

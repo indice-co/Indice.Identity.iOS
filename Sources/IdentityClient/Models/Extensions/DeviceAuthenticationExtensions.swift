@@ -13,9 +13,9 @@ internal extension DeviceAuthentication.AuthorizationRequest {
     
     // MARK: - Biometric requests
     /** Create an request body suitable for device biometric registration initialization */
-    static func biometrictInit(codeChallenge: String,
-                               deviceIds ids: ThisDeviceIds,
-                               client: Client) -> DeviceAuthentication.AuthorizationRequest {
+    static func biometricInit(codeChallenge: String,
+                              deviceIds ids: ThisDeviceIds,
+                              client: Client) -> DeviceAuthentication.AuthorizationRequest {
         try! create(codeChallenge: codeChallenge,
                      deviceIds: ids,
                      client: client,
@@ -24,9 +24,9 @@ internal extension DeviceAuthentication.AuthorizationRequest {
     }
     
     /** Create an request body suitable for device biometric login authorization */
-    static func biometrictAuth(codeChallenge: String,
-                               deviceIds ids: ThisDeviceIds,
-                               client: Client) throws -> DeviceAuthentication.AuthorizationRequest {
+    static func biometricAuth(codeChallenge: String,
+                              deviceIds ids: ThisDeviceIds,
+                              client: Client) throws -> DeviceAuthentication.AuthorizationRequest {
         try create(codeChallenge: codeChallenge,
                    deviceIds: ids,
                    client: client,
