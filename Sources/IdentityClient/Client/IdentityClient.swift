@@ -49,12 +49,13 @@ final public class IdentityClient: Sendable {
     // MARK: - Init
     public init(client          : Client,
                 configuration   : IdentityConfig,
-                options         : IdentityClient.Options = .init(maxTrustedDevicesCount: 1),
+                options         : IdentityClient.Options = .init(),
                 currentDeviceInfoProvider: CurrentDeviceInfoProvider,
                 valueStorage    : ValueStorage = UserDefaults.standard,
                 secureStorage   : SecureStorage = SecureStorage(),
                 tokenStorage    : TokenStorage = .ephemeral,
-                networkOptions  : NetworkOptions) {
+                networkOptions  : NetworkOptions
+    ) {
         self.client         = client
         self.configuration  = configuration
         self.valueStorage   = valueStorage
@@ -80,13 +81,13 @@ final public class IdentityClient: Sendable {
 
 public struct IdentityClientOptions: Sendable {
     var maxTrustedDevicesCount: Int
-    var userPersistantDeviceId: Bool
+    var userPersistentDeviceId: Bool
     
     public init(
         maxTrustedDevicesCount: Int  = 1,
-        userPersistantDeviceId: Bool = false
+        userPersistentDeviceId: Bool = true
     ) {
         self.maxTrustedDevicesCount = maxTrustedDevicesCount
-        self.userPersistantDeviceId = userPersistantDeviceId
+        self.userPersistentDeviceId = userPersistentDeviceId
     }
 }

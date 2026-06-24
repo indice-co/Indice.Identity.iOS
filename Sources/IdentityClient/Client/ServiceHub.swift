@@ -143,6 +143,7 @@ public final class ServiceHub: @unchecked Sendable {
                     devicesRepository: devicesRepository,
                     valueStorage: storage,
                     secureStorage: secureStorage,
+                    errorParser: errorParser,
                     client: client)
             }
             

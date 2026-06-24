@@ -51,7 +51,7 @@ final class CryptoUtils {
         let tagData = tag ?? SecHelper.createTag(lockedKey: locked)
         let attrs   = SecHelper.createAttributes(tagged: tagData, bioLocked: locked)
         
-        deleteKeyPair(locked: locked)
+        deleteKeyPair(locked: locked, tagged: tag)
         
         var error: Unmanaged<CFError>?
         guard let privateKey = SecKeyCreateRandomKey(attrs as CFDictionary, &error) else {

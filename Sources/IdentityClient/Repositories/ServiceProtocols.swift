@@ -27,7 +27,7 @@ public protocol DevicesRepository: Repository {
     // MARK: Management
     func devices() async throws -> ResultSet<DeviceInfo>
     func device(byId: String) async throws -> DeviceInfo
-    func create(device: CreateDeviceRequest) async throws
+    func create(device: CreateDeviceRequest) async throws -> DeviceInfo
     func update(deviceId: String, with: UpdateDeviceRequest) async throws
     func delete(deviceId: String) async throws
     

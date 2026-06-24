@@ -48,6 +48,7 @@ public extension ValueStorageKey {
 }
 
 public class DevicesData: ObservableObject, @unchecked Sendable {
+    
     @Published
     public private(set)
     var userDevices: [DeviceInfo]? = nil
@@ -56,11 +57,32 @@ public class DevicesData: ObservableObject, @unchecked Sendable {
     public private(set)
     var thisDevice: DeviceInfo? = nil
     
-    func updateWith(userDevices: [DeviceInfo]?, thisDeviceId: String?) {
+    func set(thisDevice: DeviceInfo?) {
+        let prev = self.thisDevice
+        self.thisDevice = thisDevice
+        
+        if let thisDevice {
+            updateNoAddWith(device: thisDevice)
+        } else if let prev {
+            self.userDevices?
+                .removeAll { $0.deviceId == prev.deviceId }
+        }
+    }
+    
+    func set(userDevices: [DeviceInfo]?) {
         self.userDevices = userDevices
-        self.thisDevice = userDevices?.first(where: {
-            $0.deviceId == thisDeviceId
-        })
+    }
+    
+    @discardableResult
+    private func updateNoAddWith(device: DeviceInfo) -> Bool {
+        let index = userDevices?.firstIndex {
+            $0.deviceId == device.deviceId
+        }
+        
+        guard let index else { return false }
+        
+        userDevices?[index] = device
+        return true
     }
 }
 
@@ -126,22 +148,26 @@ final public actor DevicesService: Sendable {
     private let devicesRepository    : DevicesRepository
     private let valueStorage         : ValueStorage
     private let secureStorage        : SecureStorage
+    private let errorParser          : ErrorParser
     private let client               : Client
 
     
-    private var cancellables         = Set<AnyCancellable>()
+    private var tokens = Set<AnyCancellable>()
     
     public var ids: ThisDeviceIds {
         thisDeviceRepository.ids
     }
     
-    init(identityOptions: IdentityClientOptions,
-         serviceProvider: ServiceHub,
-         thisDeviceRepository: ThisDeviceRepository,
-         devicesRepository: DevicesRepository,
-         valueStorage: ValueStorage,
-         secureStorage: SecureStorage,
-         client: Client) {
+    init(
+        identityOptions: IdentityClientOptions,
+        serviceProvider: ServiceHub,
+        thisDeviceRepository: ThisDeviceRepository,
+        devicesRepository: DevicesRepository,
+        valueStorage: ValueStorage,
+        secureStorage: SecureStorage,
+        errorParser: ErrorParser,
+        client: Client
+    ) {
         
         self.identityOptions = identityOptions
         self.serviceProvider = serviceProvider
@@ -149,58 +175,78 @@ final public actor DevicesService: Sendable {
         self.devicesRepository = devicesRepository
         self.valueStorage = valueStorage
         self.secureStorage = secureStorage
+        self.errorParser = errorParser
         self.client = client
         self.quickLoginStatus = .init(storage: secureStorage)
 
         self.devicesInfo
             .$thisDevice
             .assign(to: \.thisDevice, on: quickLoginStatus)
-            .store(in: &cancellables)
+            .store(in: &tokens)
     }
 
     /// Refresh the list of the user's devices
     public func refreshDevices() async throws {
-        try await updateFetchDeviceList()
+        let devices = try await fetchUserDevices()
+        devicesInfo.set(userDevices: devices)
+        devicesInfo.set(thisDevice: devices.first(where: { $0.deviceId == ids.device }))
     }
     
+    public func refreshThisDevice() async throws {
+        devicesInfo.set(thisDevice: try await fetchCurrentDevice())
+        
+    }
     
     /// Register or update an existing registration of the current device.
     @discardableResult
     public func updateThisDeviceRegistration(pnsHandle: String? = nil, tags: [String]? = nil) async throws -> DeviceInfo {
         let isRegistered: Bool = try await {
             if devicesInfo.thisDevice == nil {
-                try await updateFetchDeviceList()
+                try await refreshThisDevice()
                 return devicesInfo.thisDevice != nil
             } else { return true }
         }()
         
+        let current: DeviceInfo
         if isRegistered {
             let ids = thisDeviceRepository.ids
             try await devicesRepository.update(deviceId: ids.device,
-                                              with: .from(service: thisDeviceRepository,
-                                                          pnsHandle: pnsHandle,
-                                                          customTags: tags))
+                                               with: .from(service: thisDeviceRepository,
+                                                           pnsHandle: pnsHandle,
+                                                           customTags: tags))
+            
+            current = try await devicesRepository.device(byId: ids.device)
         } else {
-            thisDeviceRepository.resetIds()
-            try await devicesRepository.create(device: .from(service: thisDeviceRepository,
-                                                            pnsHandle: pnsHandle,
-                                                            customTags: tags))
+            if !identityOptions.userPersistentDeviceId {
+                thisDeviceRepository.resetIds()
+            }
+            
+            current = try await devicesRepository
+                .create(device: .from(service: thisDeviceRepository,
+                                      pnsHandle: pnsHandle,
+                                      customTags: tags))
         }
         
-        try await updateFetchDeviceList()
+        devicesInfo.set(thisDevice: current)
         
-        return devicesInfo.thisDevice!
+        return current
     }
     
     /// Delete a devices from the user's registered devices list.
     public func delete(deviceId: String) async throws {
         try await devicesRepository.delete(deviceId: deviceId)
         
-        devicesInfo.updateWith(
-            userDevices: devicesInfo
-                .userDevices?
-                .filter { $0.deviceId == deviceId },
-            thisDeviceId: thisDeviceRepository.ids.device)
+        if devicesInfo.thisDevice?.deviceId == deviceId {
+            devicesInfo.set(thisDevice: nil)
+        }
+        
+        if
+           var devices = devicesInfo.userDevices,
+           let index   = devicesInfo.userDevices?.firstIndex(where: { $0.deviceId == deviceId }) {
+            
+            devices.remove(at: index)
+            devicesInfo.set(userDevices: devices)
+        }
     }
 
     
@@ -262,8 +308,7 @@ extension DevicesService {
                     
                     try await self.updateDeviceWith(deviceId: deviceIds.device)
                     
-                    self.thisDeviceRepository.update(
-                        registrationId: registration.registrationId)
+                    self.thisDeviceRepository.update(registrationId: registration.registrationId)
                     
                     AuthRegistrationContext.store(
                         deviceId: deviceIds.device,
@@ -418,22 +463,27 @@ extension DevicesService {
 // MARK: Private helpers
 
 extension DevicesService {
-    func updateFetchDeviceList() async throws {
-        devicesInfo.updateWith(
-            userDevices: try await devicesRepository
-                .devices()
-                .items,
-            thisDeviceId: thisDeviceRepository
-                .ids
-                .device)
+    func fetchCurrentDevice() async throws -> DeviceInfo? {
+        do {
+            return try await devicesRepository.device(byId: ids.device)
+        } catch {
+            if errorParser.map(error)?.statusCode == 404 {
+                return nil
+            }
+            
+            throw error
+        }
+    }
+    
+    func fetchUserDevices() async throws -> [DeviceInfo] {
+        try await devicesRepository.devices().items ?? []
     }
 
     func updateDeviceWith(deviceId: String) async throws {
-        let newDevice = try await devicesRepository.device(byId: deviceId)
-        var deviceList = devicesInfo.userDevices ?? []
-        let devIndex  = devicesInfo.userDevices?.firstIndex(where: {
-            $0.deviceId == newDevice.deviceId
-        })
+        let newDevice   = try await devicesRepository.device(byId: deviceId)
+        var deviceList  = devicesInfo.userDevices ?? []
+        let devIndex    = devicesInfo.userDevices?
+            .firstIndex(where: { $0.deviceId == newDevice.deviceId })
         
         if let index = devIndex {
             deviceList[index] = newDevice
@@ -442,10 +492,10 @@ extension DevicesService {
             deviceList.insert(newDevice, at: 0)
         }
 
-        devicesInfo.updateWith(
-            userDevices: deviceList,
-            thisDeviceId: thisDeviceRepository
-                .ids
-                .device)
+        if deviceId == ids.device {
+            devicesInfo.set(thisDevice: newDevice)
+        }
+        
+        devicesInfo.set(userDevices: deviceList)
     }
 }

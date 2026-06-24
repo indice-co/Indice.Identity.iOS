@@ -160,6 +160,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
             try await login(withGrant: data.grant)
         } catch {
             self.signingData = nil
+            throw error
         }
     }
     

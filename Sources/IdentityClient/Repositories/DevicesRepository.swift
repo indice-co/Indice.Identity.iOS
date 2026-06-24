@@ -81,14 +81,14 @@ public extension DevicesRepositoryImpl {
         return try await requestProcessor.process(request: request)
     }
     
-    func create(device data: CreateDeviceRequest) async throws {
+    func create(device data: CreateDeviceRequest) async throws  -> DeviceInfo {
         let request = try URLRequest.builder()
             .post(url: configuration.baseUrl.appendingPathComponent("api/my/devices"))
             .bodyJson(of: data)
             .add(header: .accept(type: .json))
             .build()
         
-        try await requestProcessor.process(request: request)
+        return try await requestProcessor.process(request: request)
     }
     
     func update(deviceId: String, with data: UpdateDeviceRequest) async throws {

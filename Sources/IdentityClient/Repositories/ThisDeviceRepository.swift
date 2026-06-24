@@ -74,8 +74,5 @@ final internal class ThisDeviceRepositoryImpl: ThisDeviceRepository {
         
         return String(data: data, encoding: .utf8)
     }
-    
-
-    
 }
 
