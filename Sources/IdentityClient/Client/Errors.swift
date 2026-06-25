@@ -40,8 +40,8 @@ public enum IdentityClientErrors: Error, Equatable, Sendable {
     }
     
     public struct APIError: Sendable {
-        let statusCode: Int
-        let details: ExtendedProblemDetails?
+        public let statusCode: Int
+        public let details: ExtendedProblemDetails?
         
         public init(statusCode: Int, details: ExtendedProblemDetails?) {
             self.statusCode = statusCode

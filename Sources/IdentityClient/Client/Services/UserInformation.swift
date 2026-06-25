@@ -12,7 +12,12 @@ import Combine
 final public actor UserService: Sendable {
 
     @MainActor
-    public let user = CurrentValueSubject<UserInfo?, Never>(nil)
+    private let userInternal = CurrentValueSubject<UserInfo?, Never>(nil)
+    
+    @MainActor
+    public var user: AnyPublisher<UserInfo?, Never> {
+        userInternal.eraseToAnyPublisher()
+    }
     
     private let userRepository: UserInfoRepository
     private var infoState: UserInfo? = nil
@@ -31,7 +36,7 @@ final public actor UserService: Sendable {
         infoState = result
         
         await MainActor.run {
-            user.send(result)
+            userInternal.send(result)
         }
         
         return result

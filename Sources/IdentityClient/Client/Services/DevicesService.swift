@@ -109,8 +109,22 @@ public struct QuickLoginStatus: Sendable {
 /// Manages the users devices. Provides device snapshots through CurrentValueSubject publishers.
 final public actor DevicesService: Sendable {
 
-    @MainActor public let devicesInfo = CurrentValueSubject<DevicesData, Never>(.init())
-    @MainActor public let quickLoginStatus = CurrentValueSubject<QuickLoginStatus, Never>(.init())
+    @MainActor
+    private let devicesInfoInternal = CurrentValueSubject<DevicesData, Never>(.init())
+    
+    @MainActor
+    public var devicesInfo: AnyPublisher<DevicesData, Never> {
+        devicesInfoInternal.eraseToAnyPublisher()
+    }
+    
+    @MainActor
+    private let quickLoginStatusInternal = CurrentValueSubject<QuickLoginStatus, Never>(.init())
+    
+    @MainActor
+    public var quickLoginStatus: AnyPublisher<QuickLoginStatus, Never> {
+        quickLoginStatusInternal.eraseToAnyPublisher()
+    }
+    
     
     private let identityOptions      : IdentityClientOptions
     private let authorizationService : AuthorizationService
@@ -475,8 +489,8 @@ extension DevicesService {
         let quickLoginState = quickLoginState
         
         await MainActor.run {
-            devicesInfo.send(devicesState)
-            quickLoginStatus.send(quickLoginState)
+            devicesInfoInternal.send(devicesState)
+            quickLoginStatusInternal.send(quickLoginState)
         }
     }
     
@@ -485,7 +499,7 @@ extension DevicesService {
         let devicesState = devicesState
         
         await MainActor.run {
-            devicesInfo.send(devicesState)
+            devicesInfoInternal.send(devicesState)
         }
     }
 }
