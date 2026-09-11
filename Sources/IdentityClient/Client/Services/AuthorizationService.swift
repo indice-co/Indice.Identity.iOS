@@ -244,6 +244,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
       
     /// Create a prepared URL pointing to the authentication's proper endpoint in order to initiate an "Authorization Code" flow.
     /// acr\_values, and ui\_locales are omitted as they can me appended by the consumer manually.
+    nonisolated
     public func authorizationUrl(withPkce pkce: PKCE) throws -> URL {
         try authorizationUrl(withPkce: pkce, andPrompt: "login")
     }
@@ -277,7 +278,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
             .init(name: $0.key, value: $0.value)
         }
         
-        if #available(iOS 16.0, *) {
+        if #available(iOS 16.0, macOS 13, *) {
             url.append(queryItems: paramsAsQueryParams)
         } else {
             try url.appendQueryItems(paramsAsQueryParams)
@@ -297,7 +298,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
             .init(name: "id_token_hint",            value: tokenStorage.idToken),
             .init(name: "post_logout_redirect_uri", value: postLogout)]
         
-        if #available(iOS 16.0, *) {
+        if #available(iOS 16.0, macOS 13, *) {
             url.append(queryItems: queryParams)
         } else {
             try url.appendQueryItems(queryParams)

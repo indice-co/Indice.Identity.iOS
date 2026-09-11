@@ -7,8 +7,8 @@
 
 import Foundation
 
-public struct PKCE {
-    public enum ChallengeMethod: String {
+public struct PKCE: Sendable, Hashable {
+    public enum ChallengeMethod: String, Sendable {
         case sha256 = "S256"
     }
     

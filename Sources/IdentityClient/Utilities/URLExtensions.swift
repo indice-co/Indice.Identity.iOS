@@ -11,7 +11,7 @@ public extension URL {
     
     @available(iOS, deprecated: 16.0, message: "Use the built-in API instead 'append(queryItems: [URLQueryItem])'")
     mutating func appendQueryItems(_ items: [URLQueryItem]) throws {
-        guard #available(iOS 16, *) else {
+        guard #available(iOS 16, macOS 13, *) else {
             guard var urlComponents = URLComponents(string: absoluteString) else {
                 throw errorOfType(.url(malformedUrl: absoluteString))
             }

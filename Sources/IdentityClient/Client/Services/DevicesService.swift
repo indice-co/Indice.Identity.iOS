@@ -198,7 +198,7 @@ final public actor DevicesService: Sendable {
         devicesInfo.updateWith(
             userDevices: devicesInfo
                 .userDevices?
-                .filter { $0.deviceId == deviceId },
+                .filter { $0.deviceId != deviceId },
             thisDeviceId: thisDeviceRepository.ids.device)
     }
 
