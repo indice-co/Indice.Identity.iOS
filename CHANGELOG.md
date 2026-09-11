@@ -1,6 +1,11 @@
 # Changelog
 
 
+## [1.3.4] - 2026-09-11
+### Fixes
+- Fixed deleting a device, would update the remaing list incorectly.
+
+
 ## [1.3.3] - 2026-01-30
 
 ### Fixes
