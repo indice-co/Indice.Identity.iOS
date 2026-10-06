@@ -24,7 +24,7 @@ final class UserInfoRepositoryImpl: UserInfoRepository {
             .add(header: .accept(type: .json))
             .build()
         
-        return try await requestProcessor.process(request: request)
+        return try await requestProcessor.fetch(request: request).item
     }
     
 }

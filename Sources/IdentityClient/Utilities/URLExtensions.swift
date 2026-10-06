@@ -31,6 +31,18 @@ public extension URL {
         
         self.append(queryItems: items)
     }
+    
+    
+    @available(iOS, deprecated: 16.0, message: "Use the built-in API instead 'append(queryItems: [URLQueryItem])'")
+    func appendingQueryItems(_ items: [URLQueryItem]) throws -> URL {
+        if #available(iOS 16, *) {
+            return self.appending(queryItems: items)
+        }
+        
+        var copy = self
+        try copy.appendQueryItems(items)
+        return copy
+    }
 }
 
 

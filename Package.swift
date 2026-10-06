@@ -12,13 +12,13 @@ let package = Package(
             targets: ["IdentityClient"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/indice-co/Indice.Swift.Networking", .upToNextMinor(from: "1.5.0"))
+        .package(url: "https://github.com/indice-co/Indice.HTTP.Swift", .upToNextMajor(from: "1.0.0"))
     ],
     targets: [
         .target(
             name: "IdentityClient",
             dependencies: [
-                .product(name: "NetworkUtilities", package: "Indice.Swift.Networking")
+                .product(name: "NetworkUtilities", package: "Indice.HTTP.Swift")
             ]
         ),
         .testTarget(

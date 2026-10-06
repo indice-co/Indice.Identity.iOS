@@ -81,7 +81,7 @@ final public class IdentityClient: Sendable {
 #if canImport(UIKit) && canImport(DeviceKit)
 public extension IdentityClient {
     // MARK: - Init
-    public convenience init(
+    convenience init(
                 client          : Client,
                 configuration   : IdentityConfig,
                 options         : IdentityClient.Options = .init(maxTrustedDevicesCount: 1),
