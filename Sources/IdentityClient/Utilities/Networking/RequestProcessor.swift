@@ -6,16 +6,10 @@
 //
 
 import Foundation
+import NetworkUtilities
 
 
-public protocol RequestProcessor: AnyObject, Sendable {
-    
-    func process(request: URLRequest) async throws
-    
-    func process<T: Decodable>(request: URLRequest) async throws -> T where T: Sendable
-}
-
-
+public typealias RequestProcessor = NetworkUtilities::RequestProcessor
 
 
 final internal class RequestProcessorWrapper: RequestProcessor, Sendable {
@@ -28,30 +22,43 @@ final internal class RequestProcessorWrapper: RequestProcessor, Sendable {
         self.tokenAccessor = tokenAccessor
     }
     
-    func process(request: URLRequest) async throws {
+    func fetch(request: URLRequest) async throws -> Response<Void> {
         guard !request.hasAuthorizationHeaderSet else {
-            try await processor
-                .process(request: request)
-            
-            return
+            return try await processor.fetch(request: request)
         }
         
-        try await processor.process(request: request
-            .setting(value: tokenAccessor.authorization,
-                     forHeaderName: "Authorization"))
+        return try await processor.fetch(
+            request: request.setting(
+                value: tokenAccessor.authorization,
+                forHeaderName: "Authorization"))
     }
     
-    func process<T>(request: URLRequest) async throws -> T where T : Decodable, T: Sendable {
+    func fetch<T>(request: URLRequest) async throws -> Response<T> where T : Decodable, T: Sendable {
         guard !request.hasAuthorizationHeaderSet else {
             return try await processor
-                .process(request: request)
+                .fetch(request: request)
         }
         
-        return try await processor.process(request: request
-            .setting(value: tokenAccessor.authorization,
-                     forHeaderName: "Authorization"))
+        return try await processor
+            .fetch(request: request.setting(
+                value: tokenAccessor.authorization,
+                forHeaderName: "Authorization"))
     }
 }
+
+
+@available(*, deprecated, message: "Migrate to the protocol's `RequestProcessor::fetch(request:)` methods.")
+extension RequestProcessor {
+    
+    func process(request: URLRequest) async throws {
+        try await fetch(request: request).item
+    }
+    
+    func process<T: Decodable>(request: URLRequest) async throws -> T {
+        try await fetch(request: request).item
+    }
+}
+
 
 private extension URLRequest {
     var hasAuthorizationHeaderSet: Bool {

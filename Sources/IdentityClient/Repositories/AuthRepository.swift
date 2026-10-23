@@ -19,11 +19,12 @@ final class AuthRepositoryImpl: AuthRepository {
     }
     
     func authorize(grant: OAuth2Grant) async throws -> TokenResponse {
-        try await requestProcessor.process(request: .builder()
+        try await requestProcessor.fetch(request: .builder()
             .post(url: configuration.tokenEndpoint)
-            .bodyFormUtf8(params: grant.params)
+            .bodyFormUTF8(params: grant.params)
             .add(header: .accept(type: .json))
             .build())
+        .item
     }
 
     func revoke(token: TokenType, withBasicAuth auth: String) async throws {
@@ -32,11 +33,11 @@ final class AuthRepositoryImpl: AuthRepository {
         
         let request = try URLRequest.builder()
             .post(url: configuration.revokeEndpoint)
-            .bodyFormUtf8(params: body)
+            .bodyFormUTF8(params: body)
             .add(header: .accept(type: .json))
-            .add(header: .authorisation(auth: auth))
+            .add(header: .authorization(auth: auth))
             .build()
         
-        try await requestProcessor.process(request: request)
+        try await requestProcessor.fetch(request: request).item
     }
 }

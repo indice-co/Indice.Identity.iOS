@@ -28,33 +28,33 @@ public extension DevicesRepositoryImpl {
     func authorize(authRequest: DeviceAuthentication.AuthorizationRequest) async throws -> DeviceAuthentication.ChallengeResponse {
         let request = try URLRequest.builder()
             .post(url: configuration.deviceRegistration.authorization)
-            .bodyFormUtf8(params: authRequest.asDict!)
+            .bodyFormUTF8(params: authRequest.asDict!)
             .add(header: .accept(type: .json))
             .build()
         
-        return try await requestProcessor.process(request: request)
+        return try await requestProcessor.fetch(request: request).item
     }
     
     
     func initialize(authRequest: DeviceAuthentication.AuthorizationRequest) async throws -> DeviceAuthentication.ChallengeResponse {
         let request = try URLRequest.builder()
             .post(url: configuration.deviceRegistration.initialization)
-            .bodyFormUtf8(params: authRequest.asDict!)
+            .bodyFormUTF8(params: authRequest.asDict!)
             .add(header: .accept(type: .json))
             .build()
         
-        return try await requestProcessor.process(request: request)
+        return try await requestProcessor.fetch(request: request).item
     }
     
     
     func complete(registrationRequest: DeviceAuthentication.RegistrationRequest) async throws -> DeviceAuthentication.RegistrationResult {
         let request = try URLRequest.builder()
             .post(url: configuration.deviceRegistration.completion)
-            .bodyFormUtf8(params: registrationRequest.asDict!)
+            .bodyFormUTF8(params: registrationRequest.asDict!)
             .add(header: .accept(type: .json))
             .build()
         
-        return try await requestProcessor.process(request: request)
+        return try await requestProcessor.fetch(request: request).item
     }
 }
 
@@ -69,7 +69,7 @@ public extension DevicesRepositoryImpl {
             .add(header: .accept(type: .json))
             .build()
         
-        return try await requestProcessor.process(request: request)
+        return try await requestProcessor.fetch(request: request).item
     }
     
     func device(byId deviceId: String) async throws -> DeviceInfo {
@@ -78,7 +78,7 @@ public extension DevicesRepositoryImpl {
             .add(header: .accept(type: .json))
             .build()
         
-        return try await requestProcessor.process(request: request)
+        return try await requestProcessor.fetch(request: request).item
     }
     
     func create(device data: CreateDeviceRequest) async throws {
@@ -88,7 +88,7 @@ public extension DevicesRepositoryImpl {
             .add(header: .accept(type: .json))
             .build()
         
-        try await requestProcessor.process(request: request)
+        try await requestProcessor.fetch(request: request).item
     }
     
     func update(deviceId: String, with data: UpdateDeviceRequest) async throws {
@@ -98,7 +98,7 @@ public extension DevicesRepositoryImpl {
             .add(header: .accept(type: .json))
             .build()
         
-        try await requestProcessor.process(request: request)
+        try await requestProcessor.fetch(request: request).item
     }
     
     func delete(deviceId: String) async throws {
@@ -107,7 +107,7 @@ public extension DevicesRepositoryImpl {
             .add(header: .accept(type: .json))
             .build()
         
-        try await requestProcessor.process(request: request)
+        try await requestProcessor.fetch(request: request).item
     }
 }
 
@@ -127,7 +127,7 @@ public extension DevicesRepositoryImpl {
             .add(header: .accept(type: .json))
             .build()
         
-        try await requestProcessor.process(request: request)
+        try await requestProcessor.fetch(request: request).item
     }
     
     func unTrust(deviceId: String) async throws {
@@ -137,7 +137,7 @@ public extension DevicesRepositoryImpl {
             .add(header: .accept(type: .json))
             .build()
         
-        try await requestProcessor.process(request: request)
+        try await requestProcessor.fetch(request: request).item
     }
     
 }

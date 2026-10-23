@@ -9,7 +9,8 @@ import Foundation
 
 public extension URL {
     
-    @available(iOS, deprecated: 16.0, message: "Use the built-in API instead 'append(queryItems: [URLQueryItem])'")
+    @available(iOS,   deprecated: 16.0, message: "Use the built-in API instead 'append(queryItems: [URLQueryItem])'")
+    @available(macOS, deprecated: 13.0, message: "Use the built-in API instead 'append(queryItems: [URLQueryItem])'")
     mutating func appendQueryItems(_ items: [URLQueryItem]) throws {
         guard #available(iOS 16, macOS 13, *) else {
             guard var urlComponents = URLComponents(string: absoluteString) else {
@@ -30,6 +31,18 @@ public extension URL {
         
         
         self.append(queryItems: items)
+    }
+    
+    
+    @available(iOS, deprecated: 16.0, message: "Use the built-in API instead 'append(queryItems: [URLQueryItem])'")
+    func appendingQueryItems(_ items: [URLQueryItem]) throws -> URL {
+        if #available(iOS 16, macOS 13, *) {
+            return self.appending(queryItems: items)
+        }
+        
+        var copy = self
+        try copy.appendQueryItems(items)
+        return copy
     }
 }
 
