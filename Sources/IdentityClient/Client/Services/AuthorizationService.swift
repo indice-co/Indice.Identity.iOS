@@ -277,6 +277,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
         let paramsAsQueryParams: [URLQueryItem] = queryParams.map {
             .init(name: $0.key, value: $0.value)
         }
+
         if #available(iOS 16.0, macOS 13, *) {
             url.append(queryItems: paramsAsQueryParams)
         } else {
@@ -296,8 +297,8 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
         let queryParams: [URLQueryItem] = [
             .init(name: "id_token_hint",            value: tokenStorage.idToken),
             .init(name: "post_logout_redirect_uri", value: postLogout)]
-        
 
+        
         if #available(iOS 16.0, macOS 13, *) {
             url.append(queryItems: queryParams)
         } else {
