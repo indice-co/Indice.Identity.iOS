@@ -12,36 +12,38 @@ public extension URL {
     @available(iOS,   deprecated: 16.0, message: "Use the built-in API instead 'append(queryItems: [URLQueryItem])'")
     @available(macOS, deprecated: 13.0, message: "Use the built-in API instead 'append(queryItems: [URLQueryItem])'")
     mutating func appendQueryItems(_ items: [URLQueryItem]) throws {
-        #if os(macOS)
-        if #available(macOS 13, *) {
-            return self.append(queryItems: items)
-        }
-        #elseif os(iOS)
-        if #available(iOS 16, *) {
-            return self.append(queryItems: items)
-        }
-        #endif
-        
-        guard var urlComponents = URLComponents(string: absoluteString) else {
-            throw errorOfType(.url(malformedUrl: absoluteString))
-        }
+        guard #available(iOS 16, macOS 13, *) else {
+            guard var urlComponents = URLComponents(string: absoluteString) else {
+                throw errorOfType(.url(malformedUrl: absoluteString))
+            }
 
-        let initialsParams = urlComponents.queryItems ??  []
-        urlComponents.queryItems = initialsParams + items
-        
-        guard let newUrl = urlComponents.url else {
-            throw errorOfType(.url(malformedUrl: absoluteString))
+            let initialsParams = urlComponents.queryItems ??  []
+            urlComponents.queryItems = initialsParams + items
+            
+            guard let newUrl = urlComponents.url else {
+                throw errorOfType(.url(malformedUrl: absoluteString))
+            }
+            
+            self = newUrl
+            
+            return
         }
         
-        self = newUrl
+        
+        self.append(queryItems: items)
     }
     
+    
+    @available(iOS, deprecated: 16.0, message: "Use the built-in API instead 'append(queryItems: [URLQueryItem])'")
     func appendingQueryItems(_ items: [URLQueryItem]) throws -> URL {
-        var url = self
-        try url.appendQueryItems(items)
-        return url
+        if #available(iOS 16, macOS 13, *) {
+            return self.appending(queryItems: items)
+        }
+        
+        var copy = self
+        try copy.appendQueryItems(items)
+        return copy
     }
-    
 }
 
 

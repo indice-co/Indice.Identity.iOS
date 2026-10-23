@@ -21,3 +21,63 @@ public protocol CurrentDeviceInfoProvider: AnyObject, Sendable {
 }
 
 
+/// Create a dummy `CurrentDeviceInfoProvider`
+///
+/// - warning:
+/// only for DEBUG scenarios.
+/// Do not use this in a environment that requires the actual Device info
+public final class DummyDeviceInfoProvider: CurrentDeviceInfoProvider {
+    public let name: String = "dummy"
+    public let model: String = "dummy"
+    public let osVersion: String = "dummy"
+    
+    public static let shared = DummyDeviceInfoProvider()
+}
+
+public extension CurrentDeviceInfoProvider where Self == DummyDeviceInfoProvider {
+    
+    /// The shared instance of the dummy `CurrentDeviceInfoProvider`
+    ///
+    /// - warning:
+    /// only for DEBUG scenarios.
+    /// Do not use this in a environment that requires the actual Device info
+    static var dummy: Self { DummyDeviceInfoProvider.shared }
+}
+
+
+
+#if canImport(UIKit) && canImport(DeviceKit)
+import UIKit
+import DeviceKit
+
+public final class UIDeviceInfoProvider: CurrentDeviceInfoProvider {
+    
+    private init() {}
+    
+    public static let shared = UIDeviceInfoProvider()
+    
+    public var name: String {
+        var devName = UIDevice.current.name
+        
+        if !devName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return devName
+        }
+        
+        let dev = UIDevice.current
+        
+        devName =   dev.model + " "
+        devName +=  dev.systemName + " "
+        devName +=  dev.systemVersion
+        
+        return devName
+    }
+    
+    public var model: String { "\(Device.current)" }
+    public var osVersion: String { "\(UIDevice.current.systemName) \(UIDevice.current.systemVersion)" }
+}
+
+public extension CurrentDeviceInfoProvider where Self == UIDeviceInfoProvider {
+    static var uiDevice: Self { UIDeviceInfoProvider.shared }
+}
+
+#endif

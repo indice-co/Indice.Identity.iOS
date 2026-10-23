@@ -25,7 +25,7 @@ final public class MyAccountRepositoryImpl : MyAccountRepository {
             .add(header: .accept(type: .json))
             .build()
         
-        try await requestProcessor.process(request: request)
+        try await requestProcessor.fetch(request: request).item
     }
     
     public func verify(password passwordRequest: ValidatePasswordRequest) async throws -> CredentialsValidationInfo {
@@ -34,14 +34,15 @@ final public class MyAccountRepositoryImpl : MyAccountRepository {
             .bodyJson(of: passwordRequest)
             .build()
         
-        return try await requestProcessor.process(request: request)
+        return try await requestProcessor.fetch(request: request).item
     }
     
     public func verify(username usernameRequest: ValidateUsernameRequest) async throws {
-        try await requestProcessor.process(request: .builder()
+        try await requestProcessor.fetch(request: .builder()
             .post(url: configuration.baseUrl.appendingPathComponent("/api/account/username-exists"))
             .bodyJson(of: usernameRequest)
             .build())
+        .item
     }
     
     public func forgot(password forgotPasswordRequest: ForgotPasswordRequest) async throws {
@@ -50,7 +51,7 @@ final public class MyAccountRepositoryImpl : MyAccountRepository {
             .bodyJson(of: forgotPasswordRequest)
             .build()
         
-        try await requestProcessor.process(request: request)
+        try await requestProcessor.fetch(request: request).item
     }
     
     public func forgot(passwordConfirmation confirmationRequest: ForgotPasswordConfirmation) async throws {
@@ -59,7 +60,7 @@ final public class MyAccountRepositoryImpl : MyAccountRepository {
             .bodyJson(of: confirmationRequest)
             .build()
         
-        try await requestProcessor.process(request: request)
+        try await requestProcessor.fetch(request: request).item
     }
     
     
@@ -70,7 +71,7 @@ final public class MyAccountRepositoryImpl : MyAccountRepository {
             .add(header: .accept(type: .json))
             .build()
         
-        try await requestProcessor.process(request: request)
+        try await requestProcessor.fetch(request: request).item
     }
     
     public func update(email emailRequest: UpdateEmailRequest) async throws {
@@ -80,7 +81,7 @@ final public class MyAccountRepositoryImpl : MyAccountRepository {
             .add(header: .accept(type: .json))
             .build()
         
-        try await requestProcessor.process(request: request)
+        try await requestProcessor.fetch(request: request).item
     }
     
     public func update(phone phoneRequest: UpdatePhoneRequest) async throws {
@@ -90,7 +91,7 @@ final public class MyAccountRepositoryImpl : MyAccountRepository {
             .add(header: .accept(type: .json))
             .build()
         
-        try await requestProcessor.process(request: request)
+        try await requestProcessor.fetch(request: request).item
     }
     
     public func verifyEmail(with otpRequest: OtpTokenRequest) async throws {
@@ -100,7 +101,7 @@ final public class MyAccountRepositoryImpl : MyAccountRepository {
             .add(header: .accept(type: .json))
             .build()
         
-        try await requestProcessor.process(request: request)
+        try await requestProcessor.fetch(request: request).item
     }
     
     public func verifyPhone(with otpRequest: OtpTokenRequest) async throws {
@@ -110,7 +111,7 @@ final public class MyAccountRepositoryImpl : MyAccountRepository {
             .add(header: .accept(type: .json))
             .build()
         
-        try await requestProcessor.process(request: request)
+        try await requestProcessor.fetch(request: request).item
     }
     
 }

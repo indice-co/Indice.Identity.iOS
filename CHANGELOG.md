@@ -1,6 +1,20 @@
 # Changelog
 
 
+## [1.3.5] - 2026-10-23
+### Breaking
+- Decoupled from [NetworkClient](https://github.com/indice-co/Indice.Swift.Networking) package. New dependency is the lightweight HTTP utility package [Indice.HTTP.Swift](https://github.com/indice-co/Indice.HTTP.Swift). 
+- `RequestProcessor` replaced by `NetworkUtilities::RequestProcessor` with a signature change from `process(request:)` to `fetch(request:)`.
+    
+### Fixes    
+- Fixed an issue where deleting a device registration would keep garbage data.
+
+
+## [1.3.4] - 2026-09-11
+### Fixes
+- Fixed deleting a device, would update the remaining list incorrectly.
+
+
 ## [1.3.3] - 2026-01-30
 
 ### Fixes
@@ -22,7 +36,7 @@
 ## [1.3.0] - 2025-12-04
 
 ### Breaking changes
-- Rename package to `IdentityClient`. Find/Replace all your imports fromt `import Indice_Identity` to `import IdentityClient`, it'll be fine.
+- Rename package to `IdentityClient`. Find/Replace all your imports from `import Indice_Identity` to `import IdentityClient`, it'll be fine.
 - Rename property `IdentityClient.authorizationService` to `IdentityClient.authService` for brevity. 
 - Remove `IdentityClientFactory`. User `IdentityClient.init` as it is a concrete type now. 
 - `IdentityClient.init` property `NetworkOptions` do not provide the instance of the client.
@@ -34,17 +48,17 @@
 - Added a `SecureStorage` class, that uses the SecItem API, used for sensitive data storage.
 - `AuthorizationService` exposes a `signWithBiometricSecurityContext(_:dataType:)` method that signs a `Swift.Data` struct with the security context of the latest successful biometric grant flow, if available.
 - Added default implementation of `CurrentDeviceInfoProvider` protocol, if `UIKit` and `DeviceKit` are available. Available as a static property `uiDevice`. 
-- Added `CriticalSectionLock` a wrapper over an __non reentrant__ `os_unfair_lock`. Used internaly, available also for you!
+- Added `CriticalSectionLock` a wrapper over an __non reentrant__ `os_unfair_lock`. Used internally, available also for you!
 
 ### Fixes
-- Use of internal `AuthRegistrationContext` to better represent the device's biometric/fourpin registration state, removing the requirement for the consumer to remove/update the relevant states after the `deviceId` changes.
+- Use of internal `AuthRegistrationContext` to better represent the device's biometric/four-pin registration state, removing the requirement for the consumer to remove/update the relevant states after the `deviceId` changes.
 
 
 ## [1.2.1] - 2024-09-11
 
 ### Changes
 - `IdentityClient` doesn't use the `NetworkClient` any more as a default http client.<br>
-  If you rely on the `NetworkClient` included with this package, *dont*. It will eventually be fully removed as a dependency. 
+  If you rely on the `NetworkClient` included with this package, *don't*. It will eventually be fully removed as a dependency. 
 - `NetworkOptions` to include `ErrorParser` in order to transform the relevant errors of the `RequestProcessor` to concrete ones if possible.
 - `Client.urls` is now nullable.   
 

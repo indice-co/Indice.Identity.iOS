@@ -78,6 +78,7 @@ final public class IdentityClient: Sendable {
 }
 
 
+
 public struct IdentityClientOptions: Sendable {
     var maxTrustedDevicesCount: Int
     var userPersistantDeviceId: Bool
