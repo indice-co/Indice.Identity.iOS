@@ -154,7 +154,8 @@ final public actor DevicesService: Sendable {
 
         self.devicesInfo
             .$thisDevice
-            .assign(to: &quickLoginStatus.$thisDevice)
+            .assign(to: \.thisDevice, on: quickLoginStatus)
+            .store(in: &cancellables)
     }
 
     /// Refresh the list of the user's devices
@@ -376,9 +377,9 @@ extension DevicesService {
             $0.deviceId != ids.device
         }
             
-        let currentTrustedCount = devices.filter {
+        let currentTrustedCount = devices.count {
             $0.isTrusted == true
-        }.count
+        }
         
         let swapDeviceId: String? = await {
             if currentTrustedCount >= identityOptions.maxTrustedDevicesCount {

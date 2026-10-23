@@ -1,7 +1,7 @@
 # Changelog
 
 
-## [1.3.5] - 2026-XX-XX
+## [1.3.5] - 2026-10-23
 ### Breaking
 - Decoupled from [NetworkClient](https://github.com/indice-co/Indice.Swift.Networking) package. New dependency is the lightweight HTTP utility package [Indice.HTTP.Swift](https://github.com/indice-co/Indice.HTTP.Swift). 
 - `RequestProcessor` replaced by `NetworkUtilities::RequestProcessor` with a signature change from `process(request:)` to `fetch(request:)`.

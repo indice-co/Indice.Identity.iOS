@@ -277,7 +277,6 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
         let paramsAsQueryParams: [URLQueryItem] = queryParams.map {
             .init(name: $0.key, value: $0.value)
         }
-        
         if #available(iOS 16.0, macOS 13, *) {
             url.append(queryItems: paramsAsQueryParams)
         } else {
@@ -298,6 +297,7 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
             .init(name: "id_token_hint",            value: tokenStorage.idToken),
             .init(name: "post_logout_redirect_uri", value: postLogout)]
         
+
         if #available(iOS 16.0, macOS 13, *) {
             url.append(queryItems: queryParams)
         } else {
@@ -316,14 +316,14 @@ public actor AuthorizationService: AuthorizationSecurityDataHolder {
 private extension AuthorizationService {
     
     func keyOrThrow(locked: Bool, tagged tag: CryptoUtils.TagData? = nil) throws -> KeyPair {
-        switch CryptoUtils.loadKeyPair(locked: locked, tagged: tag) {
-        case .value(let pair): return pair
-        case .error(let code):
-            if code == errSecUserCanceled {
+        do {
+            return try CryptoUtils.loadKeyPair(locked: locked, tagged: tag)
+        } catch {
+            if case .missingKey(let status) = error, status == errSecUserCanceled {
                 throw errorOfType(.biometric(error: .userCanceled))
-            } else {
-                throw errorOfType(.biometric(error: .dataMissing))
             }
+            
+            throw errorOfType(.biometric(error: .dataMissing))
         }
     }
 }
@@ -377,23 +377,6 @@ public actor AuthorizationSecurityData {
         }
         
         return signatureData
-    }
-}
-
-
-fileprivate extension CryptoUtils.KeyResult {
-    var pair: KeyPair? {
-        switch self {
-        case .value(let pair): pair
-        default: nil
-        }
-    }
-    
-    var error: OSStatus? {
-        switch self {
-        case .error(let code): code
-        default: nil
-        }
     }
 }
 

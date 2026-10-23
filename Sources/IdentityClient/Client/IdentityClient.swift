@@ -78,29 +78,6 @@ final public class IdentityClient: Sendable {
 }
 
 
-#if canImport(UIKit) && canImport(DeviceKit)
-public extension IdentityClient {
-    // MARK: - Init
-    convenience init(
-                client          : Client,
-                configuration   : IdentityConfig,
-                options         : IdentityClient.Options = .init(maxTrustedDevicesCount: 1),
-                valueStorage    : ValueStorage = UserDefaults.standard,
-                secureStorage   : SecureStorage = SecureStorage(),
-                tokenStorage    : TokenStorage = .ephemeral,
-                networkOptions  : NetworkOptions) {
-        self.init(client          : client,
-                  configuration   : configuration,
-                  options         : options,
-                  currentDeviceInfoProvider: .uiDevice,
-                  valueStorage    : valueStorage,
-                  secureStorage   : secureStorage,
-                  tokenStorage    : tokenStorage,
-                  networkOptions  : networkOptions)
-    }
-}
-#endif
-
 
 public struct IdentityClientOptions: Sendable {
     var maxTrustedDevicesCount: Int
